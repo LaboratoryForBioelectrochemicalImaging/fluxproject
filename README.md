@@ -13,6 +13,13 @@ To run the script, download the .py file and folder of supporting files. When Fl
 
 Additional data treatment functionality (normalization of currents, slope correction, nonlinear curve fitting, etc.) is available on the Analytics tab. Customization of formatting (units, colormap, etc.) is availble on the Formatting tab. Whenever making a change to the appearance of the graph, the Plot Data button needs to be clicked again.
 
+# Screenshots
+
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/imageapp.png" width="500">
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/pacapp.png" width="500">
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/cvapp.png" width="500">
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/caapp.png" width="500">
+
 # Known Issues
 1) If Flux cannot find the supporting files, it will fail to start. Ensure the Supporting folder is in the same folder as the script.
 
