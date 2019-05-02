@@ -15,10 +15,21 @@ Additional data treatment functionality (normalization of currents, slope correc
 
 # Screenshots
 
-<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/imageapp.png" width="500">
-<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/pacapp.png" width="500">
-<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/cvapp.png" width="500">
-<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/caapp.png" width="500">
+Images:
+
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/imageapp.PNG" width="400"> 
+
+Approach curves:
+
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/pacapp.PNG" width="400"> 
+
+Cyclic voltammograms:
+
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/cvapp.PNG" width="400"> 
+
+Chronoamperograms:
+
+<img src="https://github.com/stepheli/fluxproject/blob/master/screenshots/caapp.PNG" width="400">
 
 # Known Issues
 1) If Flux cannot find the supporting files, it will fail to start. Ensure the Supporting folder is in the same folder as the script.
