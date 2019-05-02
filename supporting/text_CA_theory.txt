@@ -1,0 +1,14 @@
+
+About chronoamperometry:
+
+When a microelectrode is initially polarized at a constant potential sufficient for reaction of electroactive species in solution, a spike in current is observed associated with consumption of all reactants in the immediate vicinity of the electrode. Over time, this current decays to a steady state value related to the concentration of species in solution. One of the advantages of microelectrode-based measurements is the short times over which this decay occurs (ms-s resolution or better), which are orders of magnitude faster than macroelectrodes.
+
+The response time is a measure of the time it takes the microelectrode to reach steady state. This metric is commonly used in the biosensor field. By definition, it is time it takes the current to reach 110% of its steady state value.
+
+The large difference in response time between macro and microelectrodes stems from the difference in diffusion profile between the two. Macroelectrodes see linear diffusion to the surface, where disk microelectrodes see radial diffusion. Consequently, different equations describe the characteristic current-time relationship in each case. The Cottrell equation is used for macroelectrodes, whereas the equations below (from reference 1) describe microelectrodes.
+
+(1) Bard, A. J.; Faulkner, L. R. Electrochemical Methods: Fundamentals and Applications, 2nd Ed.; John Wiley & Sons: New York, NY, USA, 2001.
+
+In these equations, i refers to the current, n the number of electrons transferred in the reaction, F to Faraday's constant, A to the area of the electrode, D to the diffusion coefficient, C to the concentration, r0 to the radius of the electrode, and tau to a unitless time parameter.
+
+

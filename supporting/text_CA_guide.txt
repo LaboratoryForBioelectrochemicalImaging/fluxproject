@@ -1,0 +1,30 @@
+
+Importing:
+
+The import file functionality currently supports a range of file types:
+
+(1) .asc (HEKA) files containing a single chronoamp. The import file functionality assumes this data set is composed of five columns in the following order: index, time (s), current (A), time (s), potential vs. reference (V).
+
+(2) .txt (Biologic or CH Instruments) files containing a single experiment composed of one or more steps. The import file functionality assumes this data set is composed of two columns in the following order: time (s), current (A).If multiple steps are present, the data will be plotted as one continuous set.  Only the initial potential value will be reported in  the 'Potential (V vs. ref)' field.
+
+(3) .dat (Sensolytics) files containing a single experiment composed of one or more steps. The import file functionality will use the number of channels and method (headerlines 2 and 3) to determine the column order; mono or bipotentiostat experiments with constant or pulsed potential are supported.
+
+Sign of steady state current:
+
+The sign of the theoretical steady state current is calculated assuming the redox mediator is oxidized at the microelectrode. If a reduction process takes place instead, enter a negative concentration to calculate the correct steady state current for normalization.
+
+Plotting:
+
+The live graph can be customized to include lines for the theoretical or experimental steady state currents, as well as the response time. Whenever making a change to the appearance of the graph, the 'Plot Data' button needs to be clicked again to regenerate the graph with the new settings.
+
+Data treatment:
+
+The experimental steady state current is calculated as the average of the last 50 points in the data set. The response time is calculated as the time it takes the current to drop to 110% of its experimental steady state value. The algorithm for this examines the data set against this threshold in reverse order, and may be subject to error in the case of spikes or extremely noisy data.
+
+Response time:
+
+The response time is calculated as the time it takes the current to decay to 110% of its steady state value. The algorithm searches in reverse time order, from the last data point backwards, and returns the first time point where the current meets this criteria.
+
+Saving:
+
+When requested, the most recent plot of the updated results will be saved as a 400 DPI .png file. Alternatively, the processed data can be exported as a .txt file for replotting in other programs. The current settings (units, additional calculated variables) will be indicated in this text file.

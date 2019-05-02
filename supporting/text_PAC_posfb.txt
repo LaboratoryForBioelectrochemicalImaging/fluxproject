@@ -1,0 +1,2 @@
+
+> If the surface is reactive or conductive, diffusion to the electrode surface is still hindered as before, but an additional process is now possible. If the redox mediator is reversible, it may be regenerated in its original form at the surface and become available to react at the microelectrode again. Since it now has less distance to diffuse in order to react again, it can cycle through oxidation/reduction cycles very quickly, and so the current measured increases as the electrode approaches the surface (i_norm > 1). This is referred to as positive feedback.

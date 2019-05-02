@@ -1,0 +1,48 @@
+
+Importing:
+
+The import file functionality currently supports various file types:
+
+(1) .asc (HEKA) files containing a single approach curve. The import file functionality assumes this data set is composed of three or five columns in the following order: index, distance (m), current (A), **distance (m), **current (A). (** = Optional columns)
+
+(2) .txt (Biologic or CH Instruments) files containing a single approach curve. The import file functionality assumes this data set is composed of two columns in the following order: tip-substrate distance (m), current (A).
+
+(3) .dat (Sensolytics) files containing a single approach curve. The import file functionality assumes this data set is composed of three columns in the following order: distance (um), relative distance (um), current (nA).
+
+(4) .mat (HEKA) files formatted as a single trace, which contains two columns in the following order: distance (m), current (A).
+
+(5) .csv (Princeton Applied Research / PAR) files formatted as a series of three data columns beginning on line 5. Columns are assumed to be in the following order: time (s), distance (mm), current (uA).
+
+Sign of steady state current:
+
+The sign of the theoretical steady state current is calculated assuming the redox mediator is oxidized at the microelectrode. If a reduction process takes place instead, enter a negative concentration to calculate the correct steady state current for normalization.
+
+Zero tip-substrate distance:
+
+Three options are available for determining the point of zero tip-substrate distance (contact with surface) that all other distances will be calibrated against. Based on the option selected, data points prior to this point (d < 0 after calibration) will be discarded from further analysis. The number of data points remaining after this calibration is given in the '# of pts (post-processing)' field.
+
+> If 'First point with data' is selected, the first value in the data set with a non-NaN current value will be treated as d = 0. This is the default option for an asc/HEKA, txt/CH Instruments, or dat/Biologic file.
+
+> If 'First derivative analysis' is selected, the point where the derivative of the current is at a maximum will treated as d = 0. This may be able to correct for a kink in the approach curve where the electrode made contact with the surface and began to bend.
+
+> If 'No calibration' is selected, the distances in the input file will be treated as the true tip-substrate distances and no further calibration will be applied. This is the default option for a txt/Biologic file.
+
+Plotting:
+
+The live graph can be customized to include theoretical lines for pure positive/negative feedback and more. Whenever making a change to the appearance of the graph, the 'Plot Data' button needs to be clicked again to regenerate the graph with the new settings. 
+
+Fitting data:
+
+> If 'Fit Rg' is selected, an estimated Rg will be calculated by performing a nonlinear curve fit on the normalized experimental curve against the analytical approximation for negative feedback, in which Rg is a parameter. This is done using the Levenberg-Marquardt curve fitting algorithm with an initial guess of 1, no bounds provided, and default tolerances.
+
+Based on the conditions under which these equations are valid, any points where L < 0.1 will not be included in this analysis. For this function to work, the checkboxes for normalization, experimental iss, and fit Rg must be selected, and a value for both the electrode radius and experimental iss provided. This procedure for estimating Rg is only valid when the approach curve displays pure negative feedback behaviour.
+
+> If 'Fit Kappa' is selected, an estimated kappa will be calculated in a similar method to the Rg fitting method described above. The normalized experimental curve will be compared to the analytical approximation for mixed kinetics. For this function to work, the checkboxes for normalization, experimental iss, and fit Kappa must be selected, and a value for the electrode radius, Rg, and experimental iss provided. For a non-normalized value of the rate constant (k) to be calculated, a diffusion coefficient must be provided as well. This procedure for estimating kappa is only valid for Rg < 20 and where it is valid to assume the electrode sees an uniformly reactve substrate (small electrode, large features).
+
+Pure feedback settings:
+
+If 'show pure feedback cases' is selected, theoretical lines for the pure positive and negative feedback cases will be added to the graph for comparison. This requires the 'normalized currents' checkbox to be selected, and a value to be entered for both the radius and Rg of the electrode. Additionally, it requires either an experimental steady state current or concentration/diffusion coefficient of the redox mediator to be entered in order to calculate a steady state current for normalization.
+
+Saving:
+
+When requested, the most recent plot of the updated results will be saved as a 400 DPI .png file. Either of the two subplots individually or the entire figure may be saved. Alternatively, the processed data can be exported as a .txt file for replotting in other programs. The current settings (units, additional calculated variables) will be indicated in this text file. Only the data sets included on the most recent graph will be inclued in this file.

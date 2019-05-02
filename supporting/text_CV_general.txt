@@ -1,0 +1,4 @@
+
+About cyclic voltammograms:
+
+In the context of SECM, cyclic voltammograms (CVs) are typically used to characterize either the microelectrode or redox active species present in solution. For the electrode, the peak shape and presence/magnitude of a steady state current can be used to identify manufacturing defects,  electrode fouling, and more. For the solution, the identity of any redox couples can be identified by the presence of peaks and magnitude of their formal potentials.

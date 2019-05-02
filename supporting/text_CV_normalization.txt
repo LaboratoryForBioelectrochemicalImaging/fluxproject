@@ -1,0 +1,8 @@
+
+About normalization:
+
+Under mass transport limited conditions, a radial diffusion profile of reactive species develops around the electroactive area of disk-shaped microelectrodes, giving rise to a steady state current (iss). 
+
+The magnitude of this current is described by the equation below. Generally speaking, it depends on both the nature of the imaging solution and the dimensions of the electrode. n refers to the number of electrons transferred in the Faradaic reaction, Dm and cm to the diffusion coefficient and concentration of the redox mediator respectively, a to the radius of the microelectrode, and beta to a function dependent on the normalized glass radius of the electrode. 
+
+Since the currents measured depend on both the electrolyte and the microelectrode, comparing the raw currents from two experiments performed under different conditions cannot be done directly. However, we can take advantage of the relationship above and normalize our currents to the steady state value to account for these differences and compare two experiments with different conditions. This is done by dividing all currents by the steady state current, such that i_norm = i_experimental/i_ss

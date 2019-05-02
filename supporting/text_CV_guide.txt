@@ -1,0 +1,42 @@
+
+Importing:
+
+The import file functionality currently supports a range of file types:
+
+(1) .asc (HEKA) files formatted as a series of consecutive sweeps, where each sweep corresponds to a single cycle of the CV. The import functionality assumes each sweep is composed of five columns in the following order: index, time (s), current (A), time (s), potential vs. reference (V).
+
+> The scan rate for this file type is calculated from the potential/time traces over the first 25% of the first cycle. If the potential waveform possesses a peak in this location, the returned value may be inaccurate.
+
+(2) .txt (Biologic or CH Instruments) files formatted as a series of two columns in the following order: Potential (V), Current (A). Individual cycles do not need to be separated; the number of total cycles is estimated as the number of times the potential hits its maximum value, and the data will be split up into cycles accordingly.
+
+> The scan rate for .txt/CH Instruments files will be pulled from header line 13 of the input file.
+
+(3) .dat (Sensolytics) files formatted as a series of two columns in the following order: Potential (V), Current (A). Individual cycles do not need to be separated; the number of total cycles is estimated from the input file as the number of times the potential hits its maximum value, and the data will be split up into cycles accordingly.
+
+> The scan rate for this file type will be pulled from header line 19 of the input file. 
+
+(4) .mat (HEKA) files formatted as a series of traces, with two traces per cycle that follow this naming convention: Trace #_#_CycleNo_1 contains time (s) and current (A); Trace #_#_CycleNo_2 contains time (s) and potential (V).
+
+Plotting:
+
+The live graph can be customized to include theoretical/derived values for the data set, alternative reference electrodes, and more. Whenever making a change to the appearance of the graph, the 'Plot Data' button needs to be clicked again to regenerate the graph with the new settings.
+
+Reference electrode:
+
+The entry field for reference electrode is used to update the x-axis label of the graph. Only the name of the reference electrode in your preferred format (e.g. 'Li', 'Fc.') should be given in this field. If no entry is given, a default value of 'Ag/AgCl' will be used. Note: Updating this field will only update the label, the numerical values will not be converted.
+
+Formal potential:
+
+The formal potential is calculated from the first derivative of the current trace during Cycle 1. The two potentials where this derivative is at a min and max are averaged and reported as the formal potential. Graphically speaking, this corresponds to the inflection point on the curve. This procedure is not recommended if more than one redox couple is visible in the CV.
+
+Experimental steady state current:
+
+The experimental steady state current is calculated by looking for the smallest absolute value in the derivative current in the range between the anodic and cathodic peaks (see section on formal potential). Essentially, this function will return the value where the current is changing minimally in the middle 50% of the potential waveform.
+
+Sign of theoretical steady state current:
+
+The sign of the theoretical steady state current is calculated assuming the redox mediator is oxidized at the microelectrode. If a reduction process takes place instead, enter a negative concentration to calculate the correct steady state current for normalization.
+
+Saving:
+
+When requested, the most recent plot of the updated results will be saved as a 400 DPI .png file. Alternatively, the processed data can be exported as a .txt file for replotting in other programs. The current settings (units, additional calculated variables) will be indicated in this text file.

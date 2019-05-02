@@ -1,0 +1,8 @@
+
+About Flux:
+
+Flux was designed to simplify the process of treating experimental data collected using the technique of scanning electrochemical microscopy (SECM). Standard analyses are supported for the four most common experimental types: approach curves, chronoamperograms, cyclic voltammograms, and images. 
+
+At this time, the built-in theory (curve fitting, calculation of a theoretical steady state current) only supports one of the most common configurations: disk microelectrodes and a feedback mode experimental setup. However, it is important to mention that extensive development has been done on other geometries of microelectrode and modes of operation; though not supported at this time, we welcome those wishing to extend this program to support other configurations.
+
+Likewise, the focus in the theory sections is on keeping things simple. This text is not intended to be a comprehensive summary of either the historical development of the technique or the breadth of current work in the field. For that, the reader is encouraged to refer to recent reviews on SECM.

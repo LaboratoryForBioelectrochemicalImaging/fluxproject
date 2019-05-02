@@ -1,0 +1,8 @@
+
+About beta:
+
+For electrodes with a thick glass sheath, beta = 1 and the key electrode characteristic is the radius. For electrodes with thinner glass radii, diffusion can occur along the sides of the pipette (typically called back diffusion), causing a deviation from the radial diffusion that the equation for steady state current of a disk microelectrode was derived from. The degree of back diffusion is dependent on the normalized glass radius of the pipette, Rg, where Rg = (radius of glass)/(radius of electrode.)
+
+Several equations have been developed to approximate the relationship between the electrode Rg and degree of back diffusion, all with very good accuracy. The one implemented in this code for calculating the theoretical iss comes from reference 1.
+
+(1) Lefrou, C.; Cornut, R. Analytical Expressions for Quantitative Scanning Electrochemical Microscopy (SECM). ChemPhysChem 2010, 11 (3), 547-556.

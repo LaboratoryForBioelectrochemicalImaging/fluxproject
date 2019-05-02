@@ -1,0 +1,8 @@
+
+About formal potential:
+
+The standard potential of a redox couple is related to the inherent Gibbs free energy of reaction and is defined under standard conditions. The formal potential may differ from the standard potential when the reaction takes place under altered conditions of concentration/activity, temperature, or pressure according to the Nernst equation below.
+
+In macro-electrochemistry, a typical CV displays distinct anodic and cathodic peaks. In the case of an oxidation process, though a higher overpotential is present at greater potentials than the peak location, the currents drop due to mass-transfer limitations taking effect, and a corresponding lack of species available to react at the surface of the electrode. In this sitatuon, the formal potential is calculated as the average potential where the anodic and cathodic currents are at a peak.
+
+In contrast, in micro-electrochemistry (or smaller), a typical CV displays a sigmoidal shape. The same peak shape does not develop as the mass-transfer limitations now possess a steady state due to the altered diffusion pattern to the electrode surface. Though this is beneficial for microelectrode-based measurements, it means the same procedure cannot be used. In this program, the standard potential is calculated using the first derivative of the CV currents, which does possess anodic and cathodic peaks. The average of these two derivative peaks is reported as the formal potential.

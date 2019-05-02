@@ -1,0 +1,8 @@
+
+About feedback mode imaging:
+
+When positioned close to a surface (typically within one probe radius or smaller), the current measured at a microelectrode depends not only on the geometry of the probe and nature of the imaging solution, but also the characteristics of the surface.
+
+In 2D scan patterns such as raster, zigzag, or spiral, the electrode is moved in the x and y directions (constant z, variable tip-substrate distance) and the currents measured are a convolution of topography and reactivity. In 3D scan patterns such as hopping or shear force, the electrode is moved in the x, y, and z directions (variable z, constant tip-substrate distance) and the currents measured are dependent only on the reactivity of the surface.
+
+In both 2D and 3D scan patterns, the current-position relationship is used to build up an image of the reactivity of the surface over a larger region. A contrast in reactivity can be used to characterize notable features on the surface.

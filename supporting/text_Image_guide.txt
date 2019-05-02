@@ -1,0 +1,38 @@
+
+Importing:
+
+The import file functionality currently supports a range of file types:
+
+(1) .asc (HEKA) files formatted as a series of consecutive line scans, where each line scan contains three columns in the following order: index, distance (m), current (A).
+
+(2) .mat (HEKA) files formatted as a series of traces (one trace = one line scan), where each trace contains two columns in the following order: distance (m), current (A).
+
+(3) .txt (Biologic or CH Instruments) files containing a series of three columns in the following order: X (x-position in µm), Y (y-position in µm), Z (current in A). The data does not need to be present  at the beginning of the data set (header lines or X-Y table present earlier in the file will be skipped.)
+
+(4) .dat (Sensolytics) files containing a series of 7 columns in the following order: X (um), X rel (um), Y (um), Yrel (um), Z (um), Zrel (um), Ch1 (nA), Ch2 (nA). The data does not need to be present at the beginning of the data set. The number of points will be determined from lines 6 and 7 of the header. Only the currents in the Ch1 column will be plotted.
+
+(5) .csv (Princeton Applied Research / PAR) files formatted as a matrix of current values (in uA) beginning on line 8. Header line 7 contains the x-positions sampled (in mm), and the last column of the matrix the y-positions sampled (in mm).
+
+Sign of steady state current:
+
+The sign of the theoretical steady state current is calculated assuming the redox mediator is oxidized at the microelectrode. If a reduction process takes place instead, enter a negative concentration to calculate the correct steady state current for normalization.
+
+Number of points:
+
+The number of points in the x and y dimensions is related to the sampling density of the original scan. The edge detection algorithm requires square pixels (equal sampling density in each direction). If the data set has an equal number of x and y points initially, no interpolation will be performed and edge detection will be performed on the original image. If the data set has asymmetric sampling, an interpolation algorithm will be applied at the scale of 1 point/um and edge detection will be performed on the interpolated image. Edge detection on interpolated images may be poor for large scale (~mm) SECM images.
+
+Slope correction: 
+
+If slope correction is enabled, the currents along the specified edge will be fit to a straight line and the slope used to correct all parallel lines. This method works best when one edge of the image is free of any reactive/topographical features of note, and thus any differences in the current are due to a tilt in the substrate.
+
+Plotting:
+
+The live graph can be customized to normalize the currents, slope correct the raw images, and perform edge detection. Whenever making a change to data treatment procedure, the 'Plot Data' button needs to be clicked again to regenerate the graph with the new settings.
+
+Saving Figures:
+
+When requested, the most recent plot of the processed results will be saved as a 400 DPI .png file. Alternatively, the processed data can be exported as a .txt file for replotting in other programs. If the checkbox for edge detection is not enabled, only the SECM image will be saved, regardless of whether or not detected edges from a previous analysis are still displayed on screen.
+
+Exporting Data:
+
+When requested, the processed data (including all slope corrections, normalizations, and unit changes) will be exported as a .txt file.

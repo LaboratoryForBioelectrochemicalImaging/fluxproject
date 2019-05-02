@@ -1,0 +1,4 @@
+
+About approach curves:
+
+In a probe approach curve (PAC), a microelectrode is moved in the z-direction from bulk solution towards a surface. As the electrode gets closer to the surface, the nature of the surface begins to influence the currents and a deviation in the current is observed depending on the relevant feedback case. PACs are typically used to position the electrode close to a surface for imaging or characterize the point reactivity of a surface in one location either qualitatively or quantiatively.

@@ -1,0 +1,4 @@
+
+About edge detection:
+
+When this option is selected, the Canny edge detection algorithm (as implemented by the scikit-image Python package) is applied to the interpolated (if non-equal sampling density in x and y directions) or original (if equal sampling density in x and y directions) SECM image to try and isolate the boundaries of regions of interest. This method is tolerant of noisy images, but works best with densely sampled images which have been slope corrected prior to analysis.

@@ -1,0 +1,10 @@
+
+About the feedback cases:
+
+In bulk solution containing a redox mediator, a microelectrode polarized at sufficiently high overpotential displays a steady state current as described previously. This corresponds to a normalized value of i_norm = 1. When this electrode is lowered towards a surface (probe approach curve, or PAC), several feedback processes may occur. 
+
+Numerical equations have been developed which generalize the approach curves for the three feedback cases described below. These equations are typically expressed in normalized quantities, with Rg and kappa as adjustable parameters. These equations are only valid under certain conditions: L > 0.1, Rg < 20, and an infinite, uniformly reacting substrate (assumption valid where electrode size is much smaller than the size of a local feature.) The forms used in this program come from reference (1) and are given below. Nit_ins, Nit_cond, and Nit_mixed are the theoretical expressions for the normalized currents in negative, positive, and mixed feedback respectively.
+
+> If the surface is nonreactive or insulating, diffusion of the redox mediator to the electrode surface is hindered and the current measured decreases as the electrode approaches the surface (i_norm < 1). This is referred to as negative feedback. 
+
+
