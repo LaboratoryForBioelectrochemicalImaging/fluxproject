@@ -2,7 +2,7 @@
 """  
 Flux: Source Code
 v1.0
-Developed by: Lisa Stephens
+Copyright (c) 2019 Lisa Stephens
 License: GNU GPL v3
 
 This script contains the source code for Flux, a GUI developed to simplify the
