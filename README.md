@@ -3,7 +3,7 @@ Flux is a Python-based GUI for treating scanning electrochemical microscopy (SEC
 
 # Getting Started
 Two options are available for running Flux
-1) An executable file (no setup required) -- available from (WEBSITE!!)
+1) An executable file (no setup required) -- available from http://bioelectrochemistry.mcgill.ca/software.html
 2) The underlying Python script (supports modification). 
 
 To run the script, download the .py file and folder of supporting files. When Flux first opens, it will ask you to select a particular experiment, which will open a separate window with an application specialized for that experiment. To import, plot, and process your experimental data, take the following steps:
