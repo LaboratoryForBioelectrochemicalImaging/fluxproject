@@ -34,7 +34,7 @@ Chronoamperograms:
 # Known Issues
 1) If Flux cannot find the supporting files, it will fail to start. Ensure the Supporting folder is in the same folder as the script.
 
-2) Differences in the edge detection output have been observed depending on the scikit-image package version, due to updates in the Canny algorithm implementation. Furthermore, numpy/scikit-image incompatibilities have been observed for specific versions of each. A self-contained .exe with compatible versions of all required packages is availale from : (WEBSITE!!). If working with the .py file directly, the package versions used for testing are listed below. All other combinations are used at your own risk.
+2) Differences in the edge detection output have been observed depending on the scikit-image package version, due to updates in the Canny algorithm implementation. Furthermore, numpy/scikit-image incompatibilities have been observed for specific versions of each. A self-contained .exe with compatible versions of all required packages is available from : http://bioelectrochemistry.mcgill.ca/software.html. If working with the .py file directly, the package versions used for testing are listed below. All other combinations are used at your own risk.
 - numpy v1.16.2
 - pandas v0.24.1
 - scipy v1.2.1
