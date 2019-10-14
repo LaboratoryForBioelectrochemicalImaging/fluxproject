@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 """  
 Flux: Source Code
-v1.0.1
 Copyright (c) 2019 Lisa Stephens
 
  This program is free software: you can redistribute it and/or modify
@@ -4217,7 +4216,7 @@ class MenuPages:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0", font=36)
+        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4353,7 +4352,7 @@ class MenuPagesCV:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0", font=36)
+        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4465,7 +4464,7 @@ class MenuPagesCA:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0", font=36)
+        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4638,7 +4637,7 @@ class MenuPagesPAC:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0", font=36)
+        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4660,7 +4659,7 @@ class MenuPagesTop:
         frameAbout = tk.Frame(windowAbout)
         frameAbout.pack(side="right")
         
-        labelAbout = tk.Label(frameLogo,text="Flux v1.0", font=45)
+        labelAbout = tk.Label(frameLogo,text="Flux v1.0.1", font=45)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10, padx=30)
         labelDes = tk.Label(frameLogo,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelDes.grid(row=1,column=0, sticky="W"+"N", padx=30)
