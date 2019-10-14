@@ -1,9 +1,21 @@
 # -*- coding: utf-8 -*-
 """  
 Flux: Source Code
-v1.0
+v1.0.1
 Copyright (c) 2019 Lisa Stephens
-License: GNU GPL v3
+
+ This program is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    This program is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 This script contains the source code for Flux, a GUI developed to simplify the
 process of treating scanning electrochemical microscopy data sets. 
@@ -1387,8 +1399,6 @@ class CVApp:
         self.ExpIss2 = tk.Label(frameAnalytics,text="")
         self.ExpIss2.grid(row=2,column=6,padx=10,sticky="W")
         
-        
-        
         # Button for generating plot
         self.buttonPlot = tk.Button(framePlot,text="Plot Data",state="disabled",command=self.ReshapeData)
         self.buttonPlot.grid(row=0,column=1,rowspan=2,sticky="W"+"E")
@@ -1892,15 +1902,18 @@ class CVApp:
                     # Second in the middle of the scan (between first and second peak)
                     if min_index > max_index:
                         check_iss = current_deriv[max_index:min_index] == np.amin(current_deriv[max_index:min_index])
+                        check_iss2 = current_deriv[0:max_index] == np.amin(current_deriv[0:max_index])
                     else:
                         check_iss = current_deriv[min_index:max_index] == np.amin(current_deriv[min_index:max_index])
+                        check_iss2 = current_deriv[0:min_index] == np.amin(current_deriv[0:min_index])
                     
                     # Convert the index of the plateau to its corresponding current
                     iss_index = np.where(check_iss == True)
-                    iss_index = int(iss_index[0][-1]) + np.amin([max_index, min_index])    
-                    self.expiss = self.currents_reshape[0,iss_index]
+                    iss_index = int(iss_index[0][-1]) + np.amin([max_index, min_index]) 
+                    iss_index2 = np.where(check_iss2 == True)
+                    self.expiss = (self.currents_reshape[0,iss_index] - self.currents_reshape[0,iss_index2])[0,0]
                     self.ExpIss2.config(text="{0:.3f}".format(self.expiss))
-    
+                        
                 except:
                     pass      
             else:
@@ -1915,7 +1928,6 @@ class CVApp:
             
             # If loop to determine which cycle(s) to plot
             if self.multicycleVar.get() == "Plot all cycles":
-#                self.img = self.ax1.plot(self.potential,self.currents_reshape.T)
                 for i in range(0,self.ncycles):
                     if i == 0:
                         self.ax1.plot(self.potential, self.currents_reshape[i,:], label = 'Cycle 1')
@@ -1967,7 +1979,10 @@ class CVApp:
             
             # If loop to add experimental iss line
             if self.checkNormalizeExp.var.get() == 1:
-                self.ax1.axhline(y=self.expiss,color='black',linewidth=1,linestyle=':', label='Experimental iss')
+                
+                self.currents_reshape[0,iss_index]
+                self.ax1.axhline(y=self.currents_reshape[0,iss_index],color='black',linewidth=1,linestyle=':', label='Experimental iss')
+                self.ax1.axhline(y=self.currents_reshape[0,iss_index2],color='black',linewidth=1,linestyle=':')
                 self.ax1.legend()
             else:
                 pass
@@ -2429,7 +2444,10 @@ class CAApp:
                 # Determine number of pts
                 npts = len(df)
                 conpot = np.mean(df[-20:-1,4])
-                self.expiss = np.mean(df[-20:-1,2])
+                
+                # Determine iss from last 5% of data points
+                npts_iss = int(np.floor(npts)*0.05)
+                self.expiss = np.mean(df[-npts_iss:-1,2])
         
                 # Create current and potential columns accordingly
                 self.time = df[:,1]
@@ -2478,7 +2496,11 @@ class CAApp:
             try: 
                 # Determine number of pts
                 npts = len(df)
-                self.expiss = np.mean(df[-20:-1,1])
+                
+                # Determine iss from last 5% of data points
+                npts_iss = int(np.floor(npts)*0.05)
+                self.expiss = np.mean(df[-npts_iss:-1,1])
+#                self.expiss = np.mean(df[-20:-1,1])
         
                 # Create time and current variables
                 self.time = df[:,0]
@@ -2537,7 +2559,11 @@ class CAApp:
             try: 
                 # Determine number of pts
                 npts = len(df)
-                self.expiss = np.mean(df[-20:-1,1])
+                
+                # Determine iss from last 5% of data points
+                npts_iss = int(np.floor(npts)*0.05)
+                self.expiss = np.mean(df[-npts_iss:-1,1])                
+#                self.expiss = np.mean(df[-20:-1,1])
         
                 # Create time and current variables
                 self.time = df[:,0]
@@ -2623,7 +2649,11 @@ class CAApp:
                 try: 
                     # Determine number of pts
                     npts = len(df)
-                    self.expiss = np.mean(df[-20:-1,1])
+                                    
+                    # Determine iss from last 5% of data points
+                    npts_iss = int(np.floor(npts)*0.05)
+                    self.expiss = np.mean(df[-npts_iss:-1,1])
+#                    self.expiss = np.mean(df[-20:-1,1])
             
                     # Create time and current variables
                     self.time = df[:,0]
@@ -2643,8 +2673,6 @@ class CAApp:
         
         else:
             self.labelImport.config(text="File type not supported.")
-        
-
 
     """
     Looking to extend the import file functionality to support a different file type?
