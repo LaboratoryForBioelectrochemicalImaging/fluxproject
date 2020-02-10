@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 """  
-Flux: Source Code
+Flux: Source Code Vers. 1.0.2
 Copyright (c) 2019 Lisa Stephens
+With minor changes by Nathaniel Leslie (2020)
 
  This program is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by
@@ -45,6 +46,8 @@ numpy/scikit-image).
 """
 Import packages
 """
+
+FLUXVERSION = "Flux v1.0.2"
 
 # GUI
 import tkinter as tk
@@ -517,9 +520,11 @@ class ImageApp:
             self.textVar.set('Sensolytics')
         elif self.filename[-3:] == 'csv':
             self.textVar.set('PAR')
+        elif self.filename[-3:] == 'img':
+            self.textVar.set('SECMx')
         else:
             pass
-           
+        self.labelImport.config(text="Ready.")   
     def ImportFile(self):
         ## Check if manufacturer needed
         if self.filename[-3:] == 'txt' and self.textVar.get() == 'None':
@@ -566,7 +571,12 @@ class ImageApp:
                 
             except:
                 print("Integer values for the number of points required.")
-                
+        
+       ### SECMx import ####        
+        elif self.filename[-3:] == 'img': 
+            self.Import3DSECMx(self.filepath)
+            self.labelImport.config(text="File imported.")
+                   
        ### MAT import ####
         elif self.filename[-3:] == 'mat':
            try:
@@ -803,9 +813,9 @@ class ImageApp:
     """
     Looking to extend the import file functionality to support a different file type?
     The ReshapeData function assumes the following is present after the ImportFile function has run:
-        > self.xpos0, self.ypos0 = 2 separate 1D numpys array containing unique x and y values respectively in µm
+        > self.xpos0, self.ypos0 = 2 separate 1D numpy arrays containing unique x and y values respectively in µm
         > self.nptsx, self.nptsy = 2 separate integers containing the number of x and y points respectively
-        > self.currents0 = 2D numpy array contianing current values in nA.
+        > self.currents0 = 2D numpy array containing current values in nA.
         > self.nptsx, self.nptsy = Number of points in x and y directions
         
     """
@@ -819,11 +829,11 @@ class ImageApp:
         # Unit conversions; create xposG/yposG variables only to be used for graphs
         # (if converting self.xpos variable directly, errors in edge detection)
         if self.distanceVar.get() == "nm":
-            self.xposG = self.xpos.copy()*1E3 # m --> um
+            self.xposG = self.xpos.copy()*1E3 # um --> nm
             self.yposG = self.ypos.copy()*1E3
         elif self.distanceVar.get() == "mm":
-            self.xposG = self.xpos.copy()/1E3 # m --> mm
-            self.yposG = self.ypos.copy()/1E3 # m --> mm
+            self.xposG = self.xpos.copy()/1E3 # um --> mm
+            self.yposG = self.ypos.copy()/1E3 # um --> mm
         else:
             self.xposG = self.xpos.copy()
             self.yposG = self.ypos.copy()
@@ -948,8 +958,12 @@ class ImageApp:
         # Detect edges
         if self.checkEdges.var.get() == 1:   
 
+            #The Following interpolation does not play nice with negative x,y positions very much.
+            self.xposa = self.xpos - np.amin(self.xpos)#Adjust the x-positions so that there are no negative values
+            self.yposa = self.ypos - np.amin(self.ypos)#Adjust the y-positions so that there are no negative values
+            
             # Create df to be compatible with edge detection algorithm
-            ypos_int = np.amax(self.xpos)/((self.nptsy)-1)
+            ypos_int = np.amax(self.xposa)/((self.nptsy)-1)
             self.df = np.reshape(self.currents, (self.nptsx*self.nptsy))    
             self.dfycol = np.linspace(0,((self.nptsx*self.nptsy)-1),(self.nptsx*self.nptsy))
             
@@ -960,19 +974,22 @@ class ImageApp:
                     self.dfycol[i] = self.dfycol[i] + 1
             self.dfycol = ypos_int*(np.floor(np.divide(self.dfycol,self.nptsx)))
             
-            self.df = np.vstack((numpy.matlib.repmat(self.xpos,1,self.nptsy), self.df))
+            self.df = np.vstack((numpy.matlib.repmat(self.xposa,1,self.nptsy), self.df))
             self.df = np.vstack((self.dfycol,self.df))
-            self.df = self.df.T
+            self.df = self.df.T 
             
             try:
                 # Set up evenly spaced interpolation grids for edge detection
                 try:
                     # Check if already evenly spaced; if yes, do nothing; if no, create grid @ 1 pt/um level
-                    if self.nptsx != self.nptsy: 
-                        xpos_interp = np.linspace(np.amin(self.xpos), np.amax(self.xpos), np.amax(self.xpos)+1)
+                    if self.nptsx > self.nptsy: 
+                        xpos_interp = np.linspace(np.amin(self.xposa), np.amax(self.xposa), np.amax(self.xposa)+1)
+                        ypos_interp = xpos_interp
+                    elif self.nptsx < self.nptsy:
+                        xpos_interp = np.linspace(np.amin(self.yposa), np.amax(self.yposa), np.amax(self.yposa)+1)
                         ypos_interp = xpos_interp
                     else:
-                        xpos_interp = self.xpos
+                        xpos_interp = self.xposa
                         ypos_interp = xpos_interp
                     xpos_unigrid, ypos_unigrid = np.meshgrid(xpos_interp, ypos_interp)
                 
@@ -1030,6 +1047,52 @@ class ImageApp:
             print("Call to update canvas (detected edges) failed.")
             
         self.buttonExport.config(state="normal")
+    
+    def Import3DSECMx(self, filepath):
+        """Imports data at the filepath address. Formats data to that required by the ReshapeData() method.
+        This method is designed to read 3D SECM image files of ASCII SECMx encoding (.img)
+        PLEASE NOTE THAT THIS METHOD CANNOT READ BINARY ENCODED FILES.
+        SECMx is an SECM control software by Gunther Wittstock. https://uol.de/pc2/forschung/secm-tools/secmx"""
+        data=[]
+        try:
+            with open(filepath,'r') as fh:
+                for curline in fh: 
+                    #Ignore lines that do not contain data when reading data into global memory    
+                    if not (curline.startswith('|') or curline.startswith('[') or curline.startswith('p') or curline.startswith('F') or curline.startswith('R') or curline.startswith('\n') or len(curline) == 0) : #Read the line into memory if it is valid.
+                        curline = curline.split()#split-up the line into an array of the floating point data
+                        data.append([curline[1], curline[3], curline[-1]])#add [x/um, y/um, i/nA]
+                fh.close() 
+                     
+        
+        except:
+            self.labelImport.config(text="Could not import file.")
+            
+            
+        self.labelImport.config(text="File imported.")
+        self.buttonPlot.config(state="normal")
+        self.labelPlot.config(text="")  
+        
+        # Convert raw data to matrix
+        try:
+            df = pd.DataFrame(data, dtype=float) #turn the data into a dataframe for sorting purposes   
+            df = df.sort_values(by=[1,0])#ensure the distances are in ascending order
+            
+            df = df.values#cast the dataframe to a numpy array
+            
+            self.xpos0 = np.unique(df[:,0])#find the unique x values
+            self.ypos0 = np.unique(df[:,1])#find the unique y values
+            self.nptsx = len(self.xpos0)#number of unique x points
+            self.nptsy = len(self.ypos0)#number of unique y points
+            
+            currents = df[:,2]
+            self.currents0 = np.reshape(currents, (self.nptsx, self.nptsy))#format the 2D current map.
+            #update the window
+            self.labelXdim2.config(text=self.nptsx)
+            self.labelYdim2.config(text=self.nptsy)
+
+        except Exception as e:
+            print("Error importing data: \n")
+            print(e)
             
     def BoxesSelected(self):
         # Enable/disable 'to experimental iss?' checkbox
@@ -3283,9 +3346,11 @@ class PACApp:
             self.textVar.set('Sensolytics')
         elif self.filename[-3:] == 'csv':
             self.textVar.set('PAR')
+        elif self.filename[-3:] == 'zsc':
+            self.textVar.set('SECMx')
         else:
             pass
-           
+        self.labelImport.config(text="Ready.")   
     def ImportFile(self):
         ## Check if manufacturer needed
         if self.filename[-3:] == 'txt' and self.textVar.get() == 'None':
@@ -3371,6 +3436,10 @@ class PACApp:
                           
             except:
                 self.labelImport.config(text="Error importing file.")
+            
+        ### ZSC / SECMx import ###
+        elif self.filename[-3:] == 'zsc':
+            self.Import2DSECMx(self.filepath)
             
         ### TXT / Biologic import ###
         elif self.filename[-3:] == 'txt' and self.textVar.get() == 'Biologic':
@@ -3774,7 +3843,56 @@ class PACApp:
         self.canvas.draw()         
         self.buttonSave.config(state="normal")
         self.buttonExport.config(state="normal")
-               
+    
+    def Import2DSECMx(self, filepath):
+        """Imports data at the filepath address. Formats data to that required by the ReshapeData() method.
+        This method is designed to read 2D approach curve files of ASCII SECMx encoding (.zsc)
+        PLEASE NOTE THAT THIS METHOD CANNOT READ BINARY ENCODED FILES.
+        SECMx is an SECM control software by Gunther Wittstock. https://uol.de/pc2/forschung/secm-tools/secmx"""
+        data=[]
+        use13 = False #This variable determines which columns to read, the 2nd and 4th if True (for when an ADC column is in the datafile, or the 2nd and 3rd for when there is no ADC current column.
+        try:
+            with open(filepath,'r') as fh:
+                for curline in fh: 
+                    if curline.startswith('p'):#access the data table header to determine if an ADC column exists. If so, there will be 4 columns and use13 shall be true. otherwise, col1 and col2 should be used.
+                        use13 = len(curline.split('\t')) == 4
+                    #Ignore lines that do not contain data when reading data into global memory    
+                    if not (curline.startswith('|') or curline.startswith('[') or curline.startswith('p') or curline.startswith('\n') or len(curline) == 0) : #Read the line into memory if it is valid.
+                        curline = curline.split()#split-up the line into an array of the floating point data
+                        if use13:
+                            data.append([curline[1], curline[3]])
+                        else :
+                            data.append([curline[1], curline[2]])
+                fh.close() 
+                     
+        
+        except:
+            self.labelImport.config(text="Could not import file.")
+            
+            
+        self.labelImport.config(text="File imported.")
+        self.buttonPlot.config(state="normal")
+        self.labelPlot.config(text="")  
+        
+        # Convert raw data to matrix
+        try:
+            df = pd.DataFrame(data, dtype=float) #turn the data into a dataframe for sorting purposes   
+            df = df.sort_values(0)#ensure the distances are in ascending order
+            df = df.values#cast the dataframe to a numpy array
+            nptsorig = len(df)#determine the number of points
+
+            # Create distance and current variables
+            self.distances0 = df[:,0]#copy the distances over
+            self.currents0 = df[:,1]#copy the currents over
+            
+            print(self.distances0)
+            print(self.currents0)
+                       
+            self.labelNpts2.config(text=nptsorig)
+        except Exception as e:
+            print("Error importing data: \n")
+         
+           
     def negfbfit(self, distancesnorm, Rg):       
         Lvalues = self.distancesnorm
         
@@ -4216,7 +4334,7 @@ class MenuPages:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
+        labelAbout = tk.Label(frameAbout,text=FLUXVERSION, font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4352,7 +4470,7 @@ class MenuPagesCV:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
+        labelAbout = tk.Label(frameAbout,text=FLUXVERSION, font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4464,7 +4582,7 @@ class MenuPagesCA:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
+        labelAbout = tk.Label(frameAbout,text=FLUXVERSION, font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4637,7 +4755,7 @@ class MenuPagesPAC:
         labelLogo = tk.Label(frameLogo,image=imageLogo)
         labelLogo.grid(row=0,column=0,padx=30,pady=30)
         
-        labelAbout = tk.Label(frameAbout,text="Flux v1.0.1", font=36)
+        labelAbout = tk.Label(frameAbout,text=FLUXVERSION, font=36)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10)
         labelAbout = tk.Label(frameAbout,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelAbout.grid(row=1,column=0, sticky="W"+"N",padx=10)
@@ -4659,7 +4777,7 @@ class MenuPagesTop:
         frameAbout = tk.Frame(windowAbout)
         frameAbout.pack(side="right")
         
-        labelAbout = tk.Label(frameLogo,text="Flux v1.0.1", font=45)
+        labelAbout = tk.Label(frameLogo,text=FLUXVERSION, font=45)
         labelAbout.grid(row=0,column=0, sticky="W"+"N",pady=10, padx=30)
         labelDes = tk.Label(frameLogo,text="GUI for treating SECM data\n Licensed under GNU GPL v3")
         labelDes.grid(row=1,column=0, sticky="W"+"N", padx=30)
