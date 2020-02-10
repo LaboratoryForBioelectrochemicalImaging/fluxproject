@@ -1,5 +1,5 @@
 # Flux
-Flux is a Python-based GUI for treating scanning electrochemical microscopy (SECM) data; subapplications with specific functionality for images, approach curves, cyclic voltammograms, and chronoamperograms are available. Standard output files (.asc, .txt, .dat, .mat) for a number of SECM instrument manufacturers are supported.
+Flux is a Python-based GUI for treating scanning electrochemical microscopy (SECM) data; subapplications with specific functionality for images, approach curves, cyclic voltammograms, and chronoamperograms are available. Standard output files (.asc, .txt, .dat, .mat, .csv, .img) for a number of SECM instrument manufacturers are supported.
 
 # Getting Started
 Two options are available for running Flux
