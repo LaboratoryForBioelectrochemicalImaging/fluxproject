@@ -2,7 +2,10 @@
 Flux Changelog
 --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------                                                                                
 V 1.0.2
-+Now supports ASCII encoding for images and approach curves from SECMx control software, 
++Now supports ASCII encoding for images and approach curves from SECMx control software,
+=split-up the monster script flux_v1.py into class scripts for the apps and menus
+=fixed a bug where the approach curve kappa fitting tried to fit negative values for kappa, causing runtime errors
+=fixed an equation in the theory page for the approach curve app 
 =minor bugfix that fixed the pre-Canny algorithm Image interpolation interpolating to a 1,1 size image when there were negative values in self.xpos
 ========================================================================================================================================================================================================
 V 1.0.1
