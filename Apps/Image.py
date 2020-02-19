@@ -80,8 +80,8 @@ class ImageApp:
         ypos = np.array([0, 1])
         currents = np.array([[0, 1], [0, 1]])
 
-        xpos_interp = np.array([0, 1])
-        ypos_interp = np.array([0, 1])
+        self.xpos_interp = np.array([0, 1])
+        self.ypos_interp = np.array([0, 1])
         currents_edges = np.array([[0, 1], [0, 1]])
 
         # Create containers
@@ -174,11 +174,11 @@ class ImageApp:
         self.labelPlot.grid(row=0, column=2, rowspan=2, sticky="W", padx=10)
 
         # Button for saving the plot
-        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.SaveFig)
+        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.save_figures)
         self.buttonSave.grid(row=0, column=3, rowspan=2, sticky="W" + "E", padx=10)
 
         # Button for exporting to text file
-        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.SaveTxt)
+        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.export_data_action)
         self.buttonExport.grid(row=0, column=4, sticky="W" + "E", padx=10)
 
         # Button for resetting window
@@ -375,7 +375,7 @@ class ImageApp:
         ### Right plot: Detected edges ###
         self.ax2 = self.fig.add_subplot(122)
         self.ax2.set_aspect(1)
-        self.edge = self.ax2.pcolormesh(xpos_interp, ypos_interp, currents_edges, cmap=cm.get_cmap('binary'))
+        self.edge = self.ax2.pcolormesh(self.xpos_interp, self.ypos_interp, currents_edges, cmap=cm.get_cmap('binary'))
         self.ax2.set_xlabel('X (µm)')
 
         def DataCursor(event):
@@ -394,38 +394,42 @@ class ImageApp:
         self.canvas.mpl_connect('button_press_event', DataCursor)
         self.canvas.draw()
 
+        self.last_dir = ""
+        # values that will hold the status of the checkboxes at the time the data was last plotted
+        self.statNorm = 0
+        self.statEdge = 0
+        self.statNormXP = 0
+
     def change_dropdown(*args):
         pass
 
     def SelectFile(self):
-        self.filepath = askopenfilename(initialdir="/",
-                                        title="Choose a file.")
-        folder = []
+        try:
+            self.filepath = askopenfilename(initialdir=self.last_dir + "/", title="Choose a file.")
 
-        # check for folder symbols in filepath
-        for c in self.filepath:
-            folder.append(c == '/')
-        folder = [i for i, j in enumerate(folder) if j == True]
-        # trim off folder path to retrieve just filename
-        self.filename = self.filepath[max(folder) + 1:]
+            filename_start = self.filepath.rindex('/') + 1
+            self.filename = self.filepath[filename_start:]
+            self.last_dir = self.filepath[:filename_start - 1]
 
-        self.labelFile.config(text=self.filename)
-        self.buttonImport.config(state="normal")
+            self.labelFile.config(text=self.filename)
+            self.buttonImport.config(state="normal")
 
-        # Set manufacturer
-        if self.filename[-3:] == 'asc':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'mat':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'dat':
-            self.textVar.set('Sensolytics')
-        elif self.filename[-3:] == 'csv':
-            self.textVar.set('PAR')
-        elif self.filename[-3:] == 'img':
-            self.textVar.set('SECMx')
-        else:
-            pass
-        self.labelImport.config(text="Ready.")
+            # Set manufacturer
+            if self.filename[-3:].lower() == 'asc':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'mat':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'dat':
+                self.textVar.set('Sensolytics')
+            elif self.filename[-3:].lower() == 'csv':
+                self.textVar.set('PAR')
+            elif self.filename[-3:].lower() == 'img':
+                self.textVar.set('SECMx')
+            else:
+                pass
+            self.labelImport.config(text="Ready.")
+        except:
+            self.ResetWindow()
 
     def ImportFile(self):
         ## Check if manufacturer needed
@@ -433,26 +437,26 @@ class ImageApp:
             self.labelImport.config(text="Specify a manufacturer.")
 
         ### ASC import ####
-        elif self.filename[-3:] == 'asc':
+        elif self.filename[-3:].lower() == 'asc':
             self.import_heka_asc(self.filepath)
         ### SECMx import ####
-        elif self.filename[-3:] == 'img':
+        elif self.filename[-3:].lower() == 'img':
             self.import_3d_secmx(self.filepath)
             self.labelImport.config(text="File imported.")
         ### MAT import ####
-        elif self.filename[-3:] == 'mat':
+        elif self.filename[-3:].lower() == 'mat':
             self.import_heka_mat(self.filepath)
         ### TXT/Biologic import ####
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == 'Biologic':
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == 'Biologic':
             self.import_biologic(self.filepath)
         ### TXT/CH instruments import ####
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == 'CH Instruments':
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == 'CH Instruments':
             self.import_ch_instruments(self.filepath)
         ### DAT / Sensolytics import ###
-        elif self.filename[-3:] == 'dat':
+        elif self.filename[-3:].lower() == 'dat':
             self.import_sensolytics(self.filepath)
         ### CSV / PAR import
-        elif self.filename[-3:] == 'csv':
+        elif self.filename[-3:].lower() == 'csv':
             self.import_par(self.filepath)
 
         # Message to display if one of the above imports does not apply
@@ -512,13 +516,37 @@ class ImageApp:
         data = []
         try:
             with open(filepath, 'r') as fh:
+                position_conversion_factor = 1.0  # multiplicative conversion factor to convert units to µm
+                current_conversion_factor = 1.0  # multiplicative conversion factor to convert units to nA
                 for curline in fh:
                     # Ignore lines that do not contain data when reading data into global memory
-                    if not (curline.startswith('|') or curline.startswith('[') or curline.startswith(
-                            'p') or curline.startswith('F') or curline.startswith('R') or curline.startswith(
-                            '\n') or len(curline) == 0):  # Read the line into memory if it is valid.
+                    if not (curline.startswith('|') or curline.startswith('[') or curline.startswith('p') or curline.startswith('F') or curline.startswith('R') or curline.startswith('\n') or len(curline) == 0):  # Read the line into memory if it is valid.
                         curline = curline.split()  # split-up the line into an array of the floating point data
-                        data.append([curline[1], curline[3], curline[-1]])  # add [x/um, y/um, i/nA]
+                        data.append([float(curline[1])*position_conversion_factor, float(curline[3])*position_conversion_factor, float(curline[-1])*current_conversion_factor])  # add [x/um, y/um, i/nA]
+                    else:
+                        # check to see is the line contains information about the units
+                        if curline.rfind('Unit=') >= 0:
+                            unit = curline[curline.rfind('Unit=') + 5:]
+                            if unit.startswith('µm'):
+                                position_conversion_factor = 1.0
+                            elif unit.startswith('nm'):
+                                position_conversion_factor = 0.001
+                            elif unit.startswith('mm'):
+                                position_conversion_factor = 1E3
+                            elif unit.startswith('nA'):
+                                current_conversion_factor = 1.0
+                            elif unit.startswith('µA'):
+                                current_conversion_factor = 1E3
+                            elif unit.startswith('mA'):
+                                current_conversion_factor = 1E6
+                            elif unit.startswith('pA'):
+                                current_conversion_factor = 0.001
+                            elif unit.startswith('A'):
+                                current_conversion_factor = 1E9
+                            elif unit.startswith('cm'):
+                                position_conversion_factor = 1E4
+                            else:
+                                print('panic: ' + unit.strip())
                 fh.close()
 
 
@@ -916,7 +944,15 @@ class ImageApp:
             # The Following interpolation does not play nice with negative x,y positions very much.
             self.xposa = self.xpos - np.amin(self.xpos)  # Adjust the x-positions so that there are no negative values
             self.yposa = self.ypos - np.amin(self.ypos)  # Adjust the y-positions so that there are no negative values
-
+            nano_adjust = 1.0
+            # check if the resolution is sub-micron. if so, use nm instead of um, additionally, ensure that this
+            # adjustment will not crash things
+            if self.xposa[1] - self.xposa[0] < 0.5 and np.amax(self.xposa) < 10:
+                nano_adjust = 1E3
+                self.xposa = self.xposa.copy() * nano_adjust
+                self.yposa = self.yposa.copy() * nano_adjust
+            self.xposa = np.around(self.xposa)
+            self.yposa = np.around(self.yposa)
             # Create df to be compatible with edge detection algorithm
             ypos_int = np.amax(self.xposa) / ((self.nptsy) - 1)
             self.df = np.reshape(self.currents, (self.nptsx * self.nptsy))
@@ -936,35 +972,37 @@ class ImageApp:
             try:
                 # Set up evenly spaced interpolation grids for edge detection
                 try:
+
                     # Check if already evenly spaced; if yes, do nothing; if no, create grid @ 1 pt/um level
                     if self.nptsx > self.nptsy:
-                        xpos_interp = np.linspace(np.amin(self.xposa), np.amax(self.xposa), np.amax(self.xposa) + 1)
-                        ypos_interp = xpos_interp
+                        self.xpos_interp = np.linspace(np.amin(self.xposa), np.amax(self.xposa), int(np.amax(self.xposa)) + 1)
+                        self.ypos_interp = self.xpos_interp
                     elif self.nptsx < self.nptsy:
-                        xpos_interp = np.linspace(np.amin(self.yposa), np.amax(self.yposa), np.amax(self.yposa) + 1)
-                        ypos_interp = xpos_interp
+                        self.xpos_interp = np.linspace(np.amin(self.yposa), np.amax(self.yposa), int(np.amax(self.yposa)) + 1)
+                        self.ypos_interp = self.xpos_interp
                     else:
-                        xpos_interp = self.xposa
-                        ypos_interp = xpos_interp
-                    xpos_unigrid, ypos_unigrid = np.meshgrid(xpos_interp, ypos_interp)
+                        self.xpos_interp = self.xposa
+                        self.ypos_interp = self.xpos_interp
+                    xpos_unigrid, ypos_unigrid = np.meshgrid(self.xpos_interp, self.ypos_interp)
 
                     # Interpolate to prepare for edge detection
-                    currents_interp = griddata((self.df[:, 1], self.df[:, 0]), self.df[:, 2],
-                                               (xpos_unigrid, ypos_unigrid), method='cubic')
+                    self.currents_interp = griddata((self.df[:, 1], self.df[:, 0]), self.df[:, 2],(xpos_unigrid, ypos_unigrid), method='cubic')
                 except:
                     print("Error interpolating data to uniform grid.")
 
-                currents_norm = (currents_interp - np.amin(currents_interp)) / (
-                            np.amax(currents_interp) - np.amin(currents_interp))
+                currents_norm = (self.currents_interp - np.amin(self.currents_interp)) / (np.amax(self.currents_interp) - np.amin(self.currents_interp))
                 self.currents_edges = feature.canny(currents_norm)
 
                 # Unit conversions
                 if self.distanceVar.get() == "mm":
-                    xpos_interp = xpos_interp.copy() / 1E3
-                    ypos_interp = ypos_interp.copy() / 1E3
+                    self.xpos_interp = self.xpos_interp.copy() / nano_adjust / 1E3
+                    self.ypos_interp = self.ypos_interp.copy() / nano_adjust / 1E3
                 elif self.distanceVar.get() == "nm":
-                    xpos_interp = xpos_interp.copy() * 1E3
-                    ypos_interp = ypos_interp.copy() * 1E3
+                    self.xpos_interp = self.xpos_interp.copy() / nano_adjust * 1E3
+                    self.ypos_interp = self.ypos_interp.copy() / nano_adjust * 1E3
+                elif self.distanceVar.get() == "µm":
+                    self.xpos_interp = self.xpos_interp.copy() / nano_adjust
+                    self.ypos_interp = self.ypos_interp.copy() / nano_adjust
                 else:
                     pass
 
@@ -976,13 +1014,13 @@ class ImageApp:
         # Update figure with detected edges
         try:
             if self.checkEdges.var.get() == 1:
-                self.labelXinterp2.config(text=len(xpos_interp))
-                self.labelYinterp2.config(text=len(ypos_interp))
+                self.labelXinterp2.config(text=len(self.xpos_interp))
+                self.labelYinterp2.config(text=len(self.ypos_interp))
                 self.labelPlot.config(text="")
 
                 self.ax2.clear()
 
-                self.edge = self.ax2.pcolormesh(xpos_interp, ypos_interp, self.currents_edges,
+                self.edge = self.ax2.pcolormesh(self.xpos_interp, self.ypos_interp, self.currents_edges,
                                                 cmap=cm.get_cmap('binary'))
                 self.ax2.set_xlabel('X ({})'.format(self.distanceVar.get()))
 
@@ -1005,6 +1043,11 @@ class ImageApp:
             print("Call to update canvas (detected edges) failed.")
 
         self.buttonExport.config(state="normal")
+
+        # save checkbox states
+        self.statNormXP = self.statusNormalizeExp.get()
+        self.statNorm = self.statusNormalize.get()
+        self.statEdge = self.statusEdges.get()
 
     def BoxesSelected(self):
         # Enable/disable 'to experimental iss?' checkbox
@@ -1031,15 +1074,15 @@ class ImageApp:
         else:
             self.entryIssExp.config(state="disabled")
 
-    def SaveFig(self):
+    def save_figures(self):
+        """Saves the figures that are currently being displayed by the app"""
         try:
-            print("Save requested.")
-
+            filepath = asksaveasfilename(initialdir=self.last_dir + "/", title="Select file", filetypes=(("png", "*.png"), ("all files", "*.*")))
+            filename_start = filepath.rindex('/')
+            self.last_dir = filepath[:filename_start]
             # If edges detected, save full image
             if self.checkEdges.var.get() == 1:
-                self.fig.savefig(fname=asksaveasfilename(
-                    initialdir="/", title="Select file",
-                    filetypes=(("png", "*.png"), ("all files", "*.*"))), dpi=400)
+                self.fig.savefig(fname=filepath, dpi=400)
                 self.labelPlot.config(text="Figure saved.")
             # If no edges detected, only save SECM image
             else:
@@ -1047,82 +1090,109 @@ class ImageApp:
                 extent = self.ax1.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
 
                 # Save the figure, expand the extent by 50% in x and 20% in y to include axis labels and colorbar
-                self.fig.savefig(fname=asksaveasfilename(
-                    initialdir="/", title="Select file",
-                    filetypes=(("png", "*.png"), ("all files", "*.*"))),
-                    bbox_inches=extent.expanded(1.6, 1.3), dpi=400)
+                self.fig.savefig(fname=filepath, bbox_inches=extent.expanded(1.6, 1.3), dpi=400)
                 self.labelPlot.config(text="Figure saved.")
 
         except:
             self.labelPlot.config(text="Error saving figure to file.")
 
-    def SaveTxt(self):
+    def export_data_action(self):
+        """Exports the data and a record of data manipulation to a specified text file.
+        The data format is:
+        Header Lines
 
-        # Prompt user to select a file name, open a text file with that name
-        export = asksaveasfilename(initialdir="/",
-                                   filetypes=[("TXT File", "*.txt")],
-                                   title="Choose a file.")
-        fh = open(export + ".txt", "w+")
+        #X,Y,I,Edge(if applicable)
+        X,Y,I,Edge values
+        ...
 
-        # Header lines: print details about the file and data treatment
-        fh.write("Original file: {} \n".format(self.filename))
-        fh.write("Units of current: {} \n".format(self.currentVar.get()))
-        fh.write("Units of distance: {} \n".format(self.distanceVar.get()))
-
-        if self.statusNormalize.get() == 1:
-            if self.statusNormalizeExp.get() == 1:
-                normalstatus = 'Experimental iss'
-                iss = self.entryIssExp.get()
-            else:
-                normalstatus = 'Theoretical iss'
-                iss = self.iss
-
-        else:
-            normalstatus = 'No'
-            iss = 'N/A'
-        fh.write("Currents normalized: {} \n".format(normalstatus))
-        fh.write("Steady state current used (nA): {} \n".format(iss))
-
-        if self.slopeXVar.get() == 'None':
-            xslope = 'No'
-        else:
-            xslope = 'Yes'
-
-        if self.slopeYVar.get() == 'None':
-            yslope = 'No'
-        else:
-            yslope = 'Yes'
-
-        fh.write("X-slope corrected: {} \n".format(xslope))
-        fh.write("Y-slope corrected: {} \n".format(yslope))
-        fh.write(" \n")
-
-        # Print 1D array of x points
-        fh.write("X pts: {} \n".format(self.nptsx))
-        np.savetxt(fh, self.xposG, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        # Print 1D array of y points
-        fh.write("Y pts: {} \n".format(self.nptsy))
-        np.savetxt(fh, self.yposG, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        # Print 2D array of currents
-        fh.write("Matrix of currents:  {} \n".format(self.nptsx * self.nptsy))
-        np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        # Print 2D array of detected edges
-        if self.statusEdges.get() == 1:
-            fh.write("Detected edges: \n")
-            np.savetxt(fh, self.currents_edges, delimiter=',', fmt='%i')
-        else:
+        Note that edge is a boolean 0 or 1 value"""
+        export = ""
+        try:
+            # Prompt user to select a file name, open a text file with that name
+            export = asksaveasfilename(initialdir=self.last_dir + "/", filetypes=[("TXT File", "*.txt")], title="Choose a file.")
+            filename_start = export.rindex('/')
+            self.last_dir = export[:filename_start]
+            if not export[-4] == '.':
+                export = export + ".txt"
+        except:
             pass
+        if not export == "":
+            try:
+                with open(export, "w+") as fh:
+                    # Header lines: print details about the file and data treatment
+                    fh.write("#FLUX: IMAGE\n")
+                    fh.write("#Original file: {} \n".format(self.filename))
+                    fh.write("#Units of current: {} \n".format("nA"))
+                    fh.write("#Units of distance: {} \n".format("um"))
+
+                    if self.statNorm == 1:
+                        if self.statNormXP == 1:
+                            normalstatus = 'Experimental iss'
+                            iss = self.entryIssExp.get()
+                        else:
+                            normalstatus = 'Theoretical iss'
+                            iss = self.iss
+
+                    else:
+                        normalstatus = 'No'
+                        iss = 'N/A'
+                    fh.write("#Currents normalized: {} \n".format(normalstatus))
+                    fh.write("#Steady state current used (nA): {} \n".format(iss))
+
+                    if self.slopeXVar.get() == 'None':
+                        xslope = 'No'
+                    else:
+                        xslope = 'Yes'
+
+                    if self.slopeYVar.get() == 'None':
+                        yslope = 'No'
+                    else:
+                        yslope = 'Yes'
+
+                    fh.write("#X-slope corrected: {} \n".format(xslope))
+                    fh.write("#Y-slope corrected: {} \n".format(yslope))
+                    fh.write("# \n")
+
+                    # Print data points in x,y,i,edge(if applicable)
+                    # Note: python matrix indexing is weird hence: [y, x] and not the more intuitive [x, y]
+                    if self.statEdge == 1:
+                        fh.write("#X,Y,I,Edge\n")
+                        for x in range(len(self.xpos_interp)):
+                            for y in range(len(self.ypos_interp)):
+                                fh.write("{0:1.4E},{1:1.4E},{2:1.4E},{3:1d}\n".format(self.xpos_interp[x], self.ypos_interp[y], self.currents_interp[y, x], self.currents_edges[y, x]))
+                    else:
+                        fh.write("#X,Y,I\n")
+                        for x in range(self.nptsx):
+                            for y in range(self.nptsy):
+                                fh.write("{0:1.4E},{1:1.4E},{2:1.4E}\n".format(self.xpos[x], self.ypos[y], self.currents[y, x]))
+                    fh.close()
+                self.labelPlot.config(text="Data exported.")
+            except:
+                self.labelPlot.config(text="Error whilst exporting data.")
+        # Below is deprecated code. This is the old file format for flux:
+#        # Print 1D array of x points
+#        fh.write("#X pts: {} \n".format(self.nptsx))
+#        np.savetxt(fh, self.xposG, delimiter=',', fmt='%1.4e')
+#        fh.write("# \n")
+
+#        # Print 1D array of y points
+#        fh.write("Y pts: {} \n".format(self.nptsy))
+#        np.savetxt(fh, self.yposG, delimiter=',', fmt='%1.4e')
+#        fh.write(" \n")
+
+#        # Print 2D array of currents
+#        fh.write("Matrix of currents:  {} \n".format(self.nptsx * self.nptsy))
+#        np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
+#        fh.write(" \n")
+
+#        # Print 2D array of detected edges
+#        if self.statusEdges.get() == 1:
+#            fh.write("Detected edges: \n")
+#            np.savetxt(fh, self.currents_edges, delimiter=',', fmt='%i')
+#        else:
+#            pass
 
         # Upate label to indicate successful save
-        self.labelPlot.config(text="Data exported.")
-
-        fh.close()
 
     def ResetWindow(self):
         print("Reset requested.")
@@ -1140,8 +1210,8 @@ class ImageApp:
         ypos = np.array([0, 1])
         currents = np.array([[0, 1], [0, 1]])
 
-        xpos_interp = np.array([0, 1])
-        ypos_interp = np.array([0, 1])
+        self.xpos_interp = np.array([0, 1])
+        self.ypos_interp = np.array([0, 1])
         currents_edges = np.array([[0, 1], [0, 1]])
 
         # Reset graph
@@ -1159,7 +1229,7 @@ class ImageApp:
         self.canvas.draw()
         self.ax2.clear()
         self.fig.subplots_adjust(left=0.07, right=1.0)
-        self.edge = self.ax2.pcolormesh(xpos_interp, ypos_interp, currents_edges, cmap=cm.get_cmap('binary'))
+        self.edge = self.ax2.pcolormesh(self.xpos_interp, self.ypos_interp, currents_edges, cmap=cm.get_cmap('binary'))
         self.ax2.set_xlabel('X (µm)')
         self.canvas.draw()
 

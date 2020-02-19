@@ -1,4 +1,5 @@
 import tkinter as tk
+import webbrowser
 
 # -*- coding: utf-8 -*-
 """  
@@ -47,11 +48,13 @@ numpy/scikit-image).
 
 
 class MenuPagesTop:
+    """This is the parent class for all of the menus in flux. It contains an about page, and a page with links to the
+    project github."""
     def __init__(self, master):
         pass
 
     @staticmethod
-    def AboutPage( version, main):
+    def about_page(main, version):
         windowAbout = tk.Toplevel(main)
         windowAbout.title('Flux')
         windowAbout.wm_iconbitmap('supporting/flux_logo.ico')  # window icon
@@ -96,3 +99,51 @@ class MenuPagesTop:
         scrollbarGuide.config(command=textGuide.yview)
 
         windowAbout.mainloop()
+
+    @staticmethod
+    def open_issue():
+        try:
+            webbrowser.open_new("https://github.com/LaboratoryForBioelectrochemicalImaging/fluxproject/issues")
+        except:
+            pass
+
+    @staticmethod
+    def open_github():
+        try:
+            webbrowser.open_new("https://github.com/LaboratoryForBioelectrochemicalImaging/fluxproject")
+        except:
+            pass
+
+    @staticmethod
+    def github_page(main):
+        """This method displays information about the project's github page, enabling users to quickly navigate to
+        resources for reporting bugs, requesting features, or forking the repository."""
+        window_github = tk.Toplevel(main)
+        window_github.title('Flux')  # window title
+        window_github.wm_iconbitmap('supporting/flux_logo.ico')  # window icon
+
+        frame_github = tk.Frame(window_github)
+        frame_github.configure(background="white", height=main.winfo_rootx())
+        frame_github.pack(side="top")
+
+        # Create text widget with scrollbar to contain large amounts of text
+
+        heading_issue = tk.Label(frame_github, text="Bug report / feature request", borderwidth=0, pady=20, background="white", font='Arial 16')
+        text_issues = tk.Text(frame_github, height=3, width=80, borderwidth=0, background="white", font='Arial 10')
+        text_issues.insert("end", "If you think you have found a bug or would like to request a feature, please report it by opening an issue on our github page: \nhttps://github.com/LaboratoryForBioelectrochemicalImaging/fluxproject/issues")
+        issue_button = tk.Button(frame_github, text="Open issues page in browser", pady=5, command=MenuPagesTop.open_issue)
+        text_issues.config(padx=20, pady=10, wrap="word")
+        heading_contribute = tk.Label(frame_github, text="Add to Flux", borderwidth=0, pady=20, background="white", font='Arial 16')
+        text_contribute = tk.Text(frame_github, height=3, width=80, borderwidth=0, background="white", font='Arial 10')
+        text_contribute.insert("end", "If you would like to modify flux to better fit your purposes, feel free to check out our github page: \nhttps://github.com/LaboratoryForBioelectrochemicalImaging/fluxproject")
+        text_contribute.config(padx=20, pady=10, wrap="word")
+        add_button = tk.Button(frame_github, text="Open flux github in browser", pady=5, command=MenuPagesTop.open_github)
+
+        heading_issue.pack(side=tk.TOP)
+        text_issues.pack(side=tk.TOP)
+        issue_button.pack(side=tk.TOP)
+        heading_contribute.pack(side=tk.TOP)
+        text_contribute.pack(side=tk.TOP)
+        add_button.pack(side=tk.TOP)
+
+        window_github.mainloop()

@@ -1,4 +1,5 @@
 import tkinter as tk
+from Menus.MMain import MenuPagesTop
 
 # -*- coding: utf-8 -*-
 """  
@@ -46,9 +47,10 @@ numpy/scikit-image).
 """
 
 
-class MenuPagesImage:
+class MenuPagesImage(MenuPagesTop):
+    """Class for the top menu of the SECM image app"""
     @staticmethod
-    def TheoryPage(root):
+    def theory_page(root):
         windowTheory = tk.Toplevel(root)
         windowTheory.title('Flux')  # window title
         windowTheory.wm_iconbitmap('supporting/flux_logo.ico')  # window icon
@@ -61,8 +63,7 @@ class MenuPagesImage:
         scrollbarTheory = tk.Scrollbar(frameTheory)
         scrollbarTheory.pack(side="right", fill="y")
 
-        textTheory = tk.Text(frameTheory, height=30, width=40, yscrollcommand=scrollbarTheory.set, borderwidth=0,
-                             background="white", font='Arial 10')
+        textTheory = tk.Text(frameTheory, height=30, width=40, yscrollcommand=scrollbarTheory.set, borderwidth=0, background="white", font='Arial 10')
 
         # Import external files/images which contain the contents of the help page
         try:
@@ -120,7 +121,7 @@ class MenuPagesImage:
         windowTheory.mainloop()
 
     @staticmethod
-    def GuidePage(root):
+    def guide_page(root):
         windowGuide = tk.Toplevel(root)
         windowGuide.title('Flux')  # window title
         windowGuide.wm_iconbitmap('supporting/flux_logo.ico')  # window icon
@@ -153,25 +154,3 @@ class MenuPagesImage:
         scrollbarGuide.config(command=textGuide.yview)
 
         windowGuide.mainloop()
-
-    @staticmethod
-    def AboutPage(root, version):
-        windowAbout = tk.Toplevel(root)
-        windowAbout.title('Flux')
-        windowAbout.wm_iconbitmap('supporting/flux_logo.ico')  # window icon
-
-        frameLogo = tk.Frame(windowAbout)
-        frameLogo.pack(side="left")
-        frameAbout = tk.Frame(windowAbout)
-        frameAbout.pack(side="right")
-
-        imageLogo = tk.PhotoImage(file="supporting/flux_logo_large.gif")
-        labelLogo = tk.Label(frameLogo, image=imageLogo)
-        labelLogo.grid(row=0, column=0, padx=30, pady=30)
-
-        labelAbout = tk.Label(frameAbout, text=version, font=36)
-        labelAbout.grid(row=0, column=0, sticky="W" + "N", pady=10)
-        labelAbout = tk.Label(frameAbout, text="GUI for treating SECM data\n Licensed under GNU GPL v3")
-        labelAbout.grid(row=1, column=0, sticky="W" + "N", padx=10)
-
-        windowAbout.mainloop()

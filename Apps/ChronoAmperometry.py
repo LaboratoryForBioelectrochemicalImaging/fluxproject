@@ -265,11 +265,11 @@ class CAApp:
         self.labelPlot.grid(row=0, column=2, rowspan=2, sticky="W", padx=10)
 
         # Button for saving the plot
-        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.SaveFig)
+        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.save_figure)
         self.buttonSave.grid(row=0, column=3, rowspan=2, sticky="W" + "E", padx=10)
 
         # Button for exporting to text file
-        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.SaveTxt)
+        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.export_data_action)
         self.buttonExport.grid(row=0, column=4, sticky="W" + "E", padx=10)
 
         # Button for resetting window
@@ -303,48 +303,53 @@ class CAApp:
         self.canvas.mpl_connect('button_press_event', DataCursor)
         self.canvas.draw()
 
+        self.last_dir = ""
+        # values that will hold the status of the checkboxes at the time the data was last plotted
+        self.statNorm = 0
+        self.statRT = 0
+        self.statNormXP = 0
+
     def change_dropdown(*args):
         pass
 
     def SelectFile(self):
-        self.filepath = askopenfilename(initialdir="/", title="Choose a file.")
-        folder = []
+        try:
+            self.filepath = askopenfilename(initialdir=self.last_dir + "/", title="Choose a file.")
 
-        # check for folder symbols in filepath
-        for c in self.filepath:
-            folder.append(c == '/')
-        folder = [i for i, j in enumerate(folder) if j == True]
-        # trim off folder path to retrieve just filename
-        self.filename = self.filepath[max(folder) + 1:]
+            filename_start = self.filepath.rindex('/') + 1
+            self.filename = self.filepath[filename_start:]
+            self.last_dir = self.filepath[:filename_start - 1]
 
-        self.labelFile.config(text=self.filename)
-        self.buttonImport.config(state="normal")
+            self.labelFile.config(text=self.filename)
+            self.buttonImport.config(state="normal")
 
-        # Set manufacturer
-        if self.filename[-3:] == 'asc':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'mat':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'dat':
-            self.textVar.set('Sensolytics')
-        else:
-            pass
+            # Set manufacturer
+            if self.filename[-3:].lower() == 'asc':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'mat':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'dat':
+                self.textVar.set('Sensolytics')
+            else:
+                pass
+        except:
+            self.ResetWindow()
 
     def ImportFile(self):
         # Check if manufacturer needed
-        if self.filename[-3:] == 'txt' and self.textVar.get() == 'None':
+        if self.filename[-3:].lower() == 'txt' and self.textVar.get() == 'None':
             self.labelImport.config(text="Specify a manufacturer.")
         ### ASC / HEKA import ###
-        if self.filename[-3:] == 'asc':
+        if self.filename[-3:].lower() == 'asc':
             self.import_heka(self.filepath)
         ### Biologic import ###
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == "Biologic":
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == "Biologic":
             self.import_biologic(self.filepath)
         ### CH Instruments import ###
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == "CH Instruments":
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == "CH Instruments":
             self.import_ch_instruments(self.filepath)
         ### Sensolytics import ###
-        elif self.filename[-3:] == 'dat':
+        elif self.filename[-3:].lower() == 'dat':
             self.import_sensolytics(self.filepath)
         else:
             self.labelImport.config(text="File type not supported.")
@@ -738,6 +743,10 @@ class CAApp:
 
         except:
             print("Data imported, call to update canvas CA failed.")
+        # save checkbox statuses
+        self.statNorm = self.statusNormalize.get()
+        self.statNormXP = self.statusNormalizeExp.get()
+        self.statRT = self.statusResponsetime.get()
 
     def BoxesSelected(self):
         # Enable/disable entry fields for calculating theoretical iss
@@ -749,61 +758,88 @@ class CAApp:
         else:
             pass
 
-    def SaveFig(self):
+    def save_figure(self):
+        """Saves the figure that is currently being displayed by the app"""
         try:
-            print("Save requested.")
-
-            self.fig.savefig(fname=asksaveasfilename(initialdir="/", title="Select file", filetypes=(("png", "*.png"), ("all files", "*.*"))), dpi=400)
+            filepath = asksaveasfilename(initialdir=self.last_dir + "/", title="Select file",
+                                         filetypes=(("png", "*.png"), ("all files", "*.*")))
+            filename_start = filepath.rindex('/')
+            self.last_dir = filepath[:filename_start]
+            self.fig.savefig(fname=filepath, dpi=400)
             self.labelPlot.config(text="Figure saved.")
-
 
         except:
             self.labelPlot.config(text="Error saving figure to file.")
 
-    def SaveTxt(self):
-        # Prompt user to select a file name, open a text file with that name
-        export = asksaveasfilename(initialdir="/", filetypes=[("TXT File", "*.txt")], title="Choose a file.")
-        fh = open(export + ".txt", "w+")
-
-        # Header lines: print details about the file and data treatment
-        fh.write("Original file: {} \n".format(self.filename))
-        fh.write("Units of current: {} \n".format(self.currentVar.get()))
-        fh.write("Units of time: {} \n".format(self.timeVar.get()))
-
-        if self.statusNormalize.get() == 1:
-            theoiss = self.iss
-            fh.write("Theoretical steady state current (nA): {0:.3f} \n".format(theoiss))
-
-            if self.statusNormalizeExp.get() == 1:
-                expiss = self.expiss
-                fh.write("Experimental steady state current (nA): {0:.3f} \n".format(expiss))
-            else:
-                expiss = 'Not calculated'
-                fh.write("Experimental steady state current (nA): {} \n".format(expiss))
-        else:
-            theoiss = 'Not calculated'
-            fh.write("Theoretical steady state current (nA): {} \n".format(theoiss))
-
-        if self.statusResponsetime.get() == 1:
-            rt = self.crittime
-        else:
+    def export_data_action(self):
+        """Exports the data in an ASCII file that can be read by most 3rd-party plotting software.
+        The data is formatted as follows:
+        #Headings
+        #
+        #Time, current
+        t,I
+        ...
+        """
+        export = ""
+        try:
+            # Prompt user to select a file name, open a text file with that name
+            export = asksaveasfilename(initialdir=self.last_dir + "/",
+                                       filetypes=[("Text file", "*.txt")],
+                                       title="Choose a file.")
+            filename_start = export.rindex('/')
+            self.last_dir = export[:filename_start]
+            if not export[-4] == '.':
+                export = export + ".txt"
+        except:
             pass
+        if not export == "":
+            try:
+                with open(export, "w+") as fh:
+                    # Header lines: print details about the file and data treatment
+                    fh.write("#FLUX: CA\n")
+                    fh.write("#Original file: {} \n".format(self.filename))
+                    fh.write("#Units of current: {} \n".format(self.currentVar.get()))
+                    fh.write("#Units of time: {} \n".format(self.timeVar.get()))
 
-        fh.write("Response time: {0:.3f} \n".format(rt))
-        fh.write(" \n")
+                    if self.statNorm == 1:
+                        theoiss = self.iss
+                        fh.write("#Theoretical steady state current (nA): {0:.3f} \n".format(theoiss))
+                    else:
+                        theoiss = 'Not calculated'
+                        fh.write("#Theoretical steady state current (nA): {} \n".format(theoiss))
 
-        # Print 1D array of time
-        fh.write("Time: \n")
-        np.savetxt(fh, self.time, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
+                    if self.statNormXP == 1:
+                        expiss = self.expiss
+                    else:
+                        expiss = 'Not calculated'
+                    fh.write("#Experimental steady state current (nA): {} \n".format(expiss))
 
-        # Print 1D array of current
-        fh.write("Current: \n")
-        np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
+                    if self.statRT == 1:
+                        rt = self.crittime
+                        fh.write("#Response time: {0:.3f} \n".format(rt))
+                    else:
+                        fh.write("#Response time: Not calculated \n")
 
-        fh.close()
-        self.labelPlot.config(text="Data exported.")
+                    fh.write("# \n")
+                    # Data block
+                    fh.write("#Time, Current")
+                    for t in range(len(self.time)):
+                        fh.write("\n{0:1.4E},{1:1.4E}".format(self.time[t], self.currents[t]))
+                    # Below is the old data export code:
+                    # Print 1D array of time
+                    # fh.write("Time: \n")
+                    # np.savetxt(fh, self.time, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
+
+                    # Print 1D array of current
+                    # fh.write("Current: \n")
+                    # np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
+
+                    fh.close()
+                    self.labelPlot.config(text="Data exported.")
+            except:
+                self.labelPlot.config(text="Error whilst exporting data.")
 
     def ResetWindow(self):
         print("Reset requested.")
