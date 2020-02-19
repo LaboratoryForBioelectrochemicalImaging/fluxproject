@@ -239,11 +239,11 @@ class CVApp:
         self.labelPlot.grid(row=0, column=2, rowspan=2, sticky="W", padx=10)
 
         # Button for saving the plot
-        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.SaveFig)
+        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.save_figure)
         self.buttonSave.grid(row=0, column=3, rowspan=2, sticky="W" + "E", padx=10)
 
         # Button for exporting to text file
-        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.SaveTxt)
+        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.export_data_action)
         self.buttonExport.grid(row=0, column=4, sticky="W" + "E", padx=10)
 
         # Button for resetting window
@@ -341,6 +341,12 @@ class CVApp:
         self.canvas.mpl_connect('button_press_event', DataCursor)
         self.canvas.draw()
 
+        self.last_dir = ""
+        # values that will hold the status of the checkboxes at the time the data was last plotted
+        self.statNorm = 0
+        self.statStPot = 0
+        self.statNormXP = 0
+
     def change_dropdown(self, *args):
         if self.multicycleVar.get() == 'Plot specific cycle':
             self.entrySpCycle.config(state="normal")
@@ -348,28 +354,27 @@ class CVApp:
             self.entrySpCycle.config(state="disabled")
 
     def SelectFile(self):
-        self.filepath = askopenfilename(initialdir="/", title="Choose a file.")
-        folder = []
+        try:
+            self.filepath = askopenfilename(initialdir=self.last_dir + "/", title="Choose a file.")
 
-        # check for folder symbols in filepath
-        for c in self.filepath:
-            folder.append(c == '/')
-        folder = [i for i, j in enumerate(folder) if j == True]
-        # trim off folder path to retrieve just filename
-        self.filename = self.filepath[max(folder) + 1:]
+            filename_start = self.filepath.rindex('/') + 1
+            self.filename = self.filepath[filename_start:]
+            self.last_dir = self.filepath[:filename_start - 1]
 
-        self.labelFile.config(text=self.filename)
-        self.buttonImport.config(state="normal")
+            self.labelFile.config(text=self.filename)
+            self.buttonImport.config(state="normal")
 
-        # Set manufacturer
-        if self.filename[-3:] == 'asc':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'mat':
-            self.textVar.set('HEKA')
-        elif self.filename[-3:] == 'dat':
-            self.textVar.set('Sensolytics')
-        else:
-            pass
+            # Set manufacturer
+            if self.filename[-3:].lower() == 'asc':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'mat':
+                self.textVar.set('HEKA')
+            elif self.filename[-3:].lower() == 'dat':
+                self.textVar.set('Sensolytics')
+            else:
+                pass
+        except:
+            self.ResetWindow()
 
     def ImportFile(self):
         ## Check if manufacturer needed
@@ -377,19 +382,19 @@ class CVApp:
             self.labelImport.config(text="Specify a manufacturer.")
 
         ### ASC / Heka import ###
-        elif self.filename[-3:] == 'asc':
+        elif self.filename[-3:].lower() == 'asc':
             self.import_heka_asc(self.filepath)
         ### MAT / HEKA import ####
-        elif self.filename[-3:] == 'mat':
+        elif self.filename[-3:].lower() == 'mat':
             self.import_heka_mat(self.filepath)
         ### TXT / Biologic import ###
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == 'Biologic':
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == 'Biologic':
             self.import_biologic(self.filepath)
         ### TXT/CH instruments import ####
-        elif self.filename[-3:] == 'txt' and self.textVar.get() == 'CH Instruments':
+        elif self.filename[-3:].lower() == 'txt' and self.textVar.get() == 'CH Instruments':
             self.import_ch_instruments(self.filepath)
         ### DAT / Sensolytics import ###
-        elif self.filename[-3:] == 'dat':
+        elif self.filename[-3:].lower() == 'dat':
             self.import_sensolytics(self.filepath)
         else:
             self.labelImport.config(text="File type not supported.")
@@ -846,6 +851,10 @@ class CVApp:
             print("Data imported, call to update canvas CV failed.")
 
         self.buttonExport.config(state="normal")
+        # save checkbox values
+        self.statNorm = self.statusNormalize.get()
+        self.statNormXP = self.statusNormalizeExp.get()
+        self.statStPot = self.statusStdPot.get()
 
     def BoxesSelected(self):
         # Enable/disable entry fields for calculating theoretical iss
@@ -857,69 +866,95 @@ class CVApp:
         else:
             pass
 
-    def SaveFig(self):
+    def save_figure(self):
+        """Saves the figure that is currently being displayed by the app"""
         try:
-            print("Save requested.")
-
-            self.fig.savefig(fname=asksaveasfilename(
-                initialdir="/", title="Select file",
-                filetypes=(("png", "*.png"), ("all files", "*.*"))), dpi=400)
+            filepath = asksaveasfilename(initialdir=self.last_dir + "/", title="Select file",
+                                         filetypes=(("png", "*.png"), ("all files", "*.*")))
+            filename_start = filepath.rindex('/')
+            self.last_dir = filepath[:filename_start]
+            self.fig.savefig(fname=filepath, dpi=400)
             self.labelPlot.config(text="Figure saved.")
-
 
         except:
             self.labelPlot.config(text="Error saving figure to file.")
 
-    def SaveTxt(self):
+    def export_data_action(self):
+        """Saves the displayed data in an ASCII data file that  should be easily readable for most 3rd-party plotting
+        software.
+        The data is formatted as follows:
+        #Headings
+        #
+        #Potential, Cycle 1, Cycle 2, ..., Cycle n
+        V,I,I...
+        ...
+        """
+        export = ""
+        try:
+            # Prompt user to select a file name, open a text file with that name
+            export = asksaveasfilename(initialdir=self.last_dir + "/",
+                                       filetypes=[("Text file", "*.txt")],
+                                       title="Choose a file.")
+            filename_start = export.rindex('/')
+            self.last_dir = export[:filename_start]
+            if not export[-4] == '.':
+                export = export + ".txt"
+        except:
+            pass
+        if not export == "":
+            try:
+                with open(export, "w+") as fh:
+                    # Header lines: print details about the file and data treatment
+                    fh.write("#FLUX: CV\n")
+                    fh.write("Original file: {} \n".format(self.filename))
+                    fh.write("Units of current: {} \n".format(self.currentVar.get()))
+                    fh.write("Units of potential: {} \n".format(self.potentialVar.get()))
 
-        # Prompt user to select a file name, open a text file with that name
-        export = asksaveasfilename(initialdir="/",
-                                   filetypes=[("TXT File", "*.txt")],
-                                   title="Choose a file.")
-        fh = open(export + ".txt", "w+")
+                    # Report theoretical iss
+                    if self.statNorm == 1:
+                        iss = self.iss
+                    else:
+                        iss = 'N/A'
+                    fh.write("#Theoretical steady state current (nA): {} \n".format(iss))
 
-        # Header lines: print details about the file and data treatment
-        fh.write("Original file: {} \n".format(self.filename))
-        fh.write("Units of current: {} \n".format(self.currentVar.get()))
-        fh.write("Units of potential: {} \n".format(self.potentialVar.get()))
+                    # Report experimental iss
+                    if self.statNormXP == 1:
+                        expiss = self.expiss
+                    else:
+                        expiss = 'N/A'
+                    fh.write("#Experimental steady state current: {} \n".format(expiss))
 
-        # Report theoretical iss
-        if self.statusNormalize.get() == 1:
-            iss = self.iss
-            fh.write("Theoretical steady state current (nA): {0:.3f} \n".format(iss))
-        else:
-            iss = 'N/A'
-            fh.write("Theoretical steady state current (nA): {} \n".format(iss))
+                    # Report formal potential
+                    if self.statStPot == 1:
+                        stdpot = self.avg_pot
+                    else:
+                        stdpot = 'Not calculated.'
+                    fh.write("#Standard potential (V vs. ref): {} \n".format(stdpot))
+                    fh.write("#\n")
+                    fh.write("#Potential")
+                    for c in range(self.ncycles):
+                        fh.write(", Cycle {0:1d}".format(c + 1))
 
-        # Report experimental iss
-        if self.statusNormalizeExp.get() == 1:
-            expiss = self.expiss
-            fh.write("Experimental steady state current: {0:.3f} \n".format(expiss))
-        else:
-            expiss = 'N/A'
-            fh.write("Experimental steady state current: {} \n".format(expiss))
+                    for v in range(len(self.potential)):
+                        fh.write("\n{0:1.4E}".format(self.potential[v]))
+                        for c in range(self.ncycles):
+                            fh.write(",{0:1.4E}".format(self.currents_reshape[c, v]))
 
-        # Report formal potential
-        if self.statusStdPot.get() == 1:
-            stdpot = self.avg_pot
-            fh.write("Standard potential (V vs. ref): {0:.3f} \n".format(stdpot))
-        else:
-            stdpot = 'Not calculated.'
-            fh.write("Standard potential (V vs. ref): {} \n".format(stdpot))
-        fh.write(" \n")
+                    # Below is the old data block encoding:
+                    # Print 1D array of potentials
+                    # fh.write("Potential: \n")
+                    # np.savetxt(fh, self.potential, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
 
-        # Print 1D array of potentials
-        fh.write("Potential: \n")
-        np.savetxt(fh, self.potential, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
+                    # Print 2D array of currents
+                    # fh.write("Current ({} cycles): \n".format(self.ncycles))
+                    # np.savetxt(fh, self.currents_reshape.T, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
 
-        # Print 2D array of currents
-        fh.write("Current ({} cycles): \n".format(self.ncycles))
-        np.savetxt(fh, self.currents_reshape.T, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        fh.close()
-        self.labelPlot.config(text="Data exported.")
+                    fh.close()
+                self.labelPlot.config(text="Data exported.")
+            except:
+                self.labelPlot.config(text="Error whilst exporting data.")
 
     def ResetWindow(self):
         print("Reset requested.")

@@ -339,7 +339,7 @@ class PACApp:
         self.labelPlot.grid(row=0, column=2, rowspan=2, sticky="W", padx=10)
 
         # Button for saving the plot
-        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.SaveFig)
+        self.buttonSave = tk.Button(framePlot, text="Save Figure", state="disabled", command=self.save_figure)
         self.buttonSave.grid(row=0, column=3, rowspan=2, sticky="W" + "E", padx=10)
 
         # Label for what portion to save
@@ -359,7 +359,7 @@ class PACApp:
         self.figsaveVar.trace('w', self.change_dropdown)
 
         # Button for exporting to text file
-        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.SaveTxt)
+        self.buttonExport = tk.Button(framePlot, text="Export Data", state="disabled", command=self.export_data_action)
         self.buttonExport.grid(row=0, column=6, sticky="W" + "E", padx=10)
 
         # Button for resetting window
@@ -401,15 +401,24 @@ class PACApp:
         self.canvas.mpl_connect('button_press_event', DataCursor)
         self.canvas.draw()
 
+        self.last_dir = ""
+        # values that will hold the status of the checkboxes at the time the data was last plotted
+        self.statNorm = 0
+        self.statFK = 0
+        self.statFB = 0
+        self.statNormXP = 0
+        self.statFRg = 0
+
     def change_dropdown(*args):
         pass
 
     def SelectFile(self):
         try:
-            self.filepath = askopenfilename(initialdir="/", title="Choose a file.")
+            self.filepath = askopenfilename(initialdir=self.last_dir + "/", title="Choose a file.")
 
             filename_start = self.filepath.rindex('/') + 1
             self.filename = self.filepath[filename_start:]
+            self.last_dir = self.filepath[:filename_start - 1]
 
             self.labelFile.config(text=self.filename)
             self.buttonImport.config(state="normal")
@@ -907,7 +916,10 @@ class PACApp:
             self.currentsnorm = self.currentsnorm[critrow:]
 
             try:
-                self.estRg = scipy.optimize.curve_fit(self.negfbfit, self.distancesnorm, self.currentsnorm)
+                # bounds prevent Rg<1 (insulating glass having smaller radius than the electrode it is meant to be
+                # surrounding)
+                self.estRg = scipy.optimize.curve_fit(self.negfbfit, self.distancesnorm,
+                                                      self.currentsnorm, bounds=(1, np.inf))
                 self.estRg = float(self.estRg[0])
                 self.labelEstRg2.config(text="{0:.3f}".format(self.estRg))
             except:
@@ -1003,6 +1015,12 @@ class PACApp:
         self.canvas.draw()
         self.buttonSave.config(state="normal")
         self.buttonExport.config(state="normal")
+        # save checkbox states
+        self.statNorm = self.statusNormalize.get()
+        self.statNormXP = self.statusNormalizeExp.get()
+        self.statFK = self.statusFitKappa.get()
+        self.statFB = self.statusFeedback.get()
+        self.statFRg = self.statusFitRg.get()
 
     def negfbfit(self, distancesnorm, Rg):
         Lvalues = self.distancesnorm
@@ -1120,15 +1138,17 @@ class PACApp:
             self.entryConc.config(state="normal")
             self.entryDiff.config(state="normal")
 
-    def SaveFig(self):
+    def save_figure(self):
+        """Saves the figure that is currently being displayed by the app"""
         try:
-            print("Save requested.")
+            filepath = asksaveasfilename(initialdir=self.last_dir + "/", title="Select file",
+                                         filetypes=(("png", "*.png"), ("all files", "*.*")))
+            filename_start = filepath.rindex('/')
+            self.last_dir = filepath[:filename_start]
 
             # Save full image
             if self.figsaveVar.get() == "Both":
-                self.fig.savefig(fname=asksaveasfilename(
-                    initialdir="/", title="Select file",
-                    filetypes=(("png", "*.png"), ("all files", "*.*"))), dpi=400)
+                self.fig.savefig(fname=filepath, dpi=400)
                 self.labelPlot.config(text="Figure saved.")
 
             # Save left image only
@@ -1137,10 +1157,7 @@ class PACApp:
                 extent = self.ax1.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
 
                 # Save the figure, expand the extent by 50% in x and 20% in y to include axis labels and colorbar
-                self.fig.savefig(fname=asksaveasfilename(
-                    initialdir="/", title="Select file",
-                    filetypes=(("png", "*.png"), ("all files", "*.*"))),
-                    bbox_inches=extent.expanded(1.5, 1.3), dpi=400)
+                self.fig.savefig(fname=filepath, dpi=400)
                 self.labelPlot.config(text="Figure saved.")
 
             # Save right image only
@@ -1149,117 +1166,150 @@ class PACApp:
                 extent = self.ax2.get_window_extent().transformed(self.fig.dpi_scale_trans.inverted())
 
                 # Save the figure, expand the extent by 50% in x and 20% in y to include axis labels and colorbar
-                self.fig.savefig(fname=asksaveasfilename(
-                    initialdir="/", title="Select file",
-                    filetypes=(("png", "*.png"), ("all files", "*.*"))),
-                    bbox_inches=extent.expanded(1.5, 1.3), dpi=400)
+                self.fig.savefig(fname=filepath, dpi=400)
                 self.labelPlot.config(text="Figure saved.")
 
         except:
             self.labelPlot.config(text="Error saving figure to file.")
 
-    def SaveTxt(self):
-        # Prompt user to select a file name, open a text file with that name
-        export = asksaveasfilename(initialdir="/",
-                                   filetypes=[("TXT File", "*.txt")],
-                                   title="Choose a file.")
-        fh = open(export + ".txt", "w+")
-
-        # Header lines: print details about the file and data treatment
-        fh.write("Original file: {} \n".format(self.filename))
-        fh.write("Units of current: {} \n".format(self.currentVar.get()))
-        fh.write("Units of distance: {} \n".format(self.distanceVar.get()))
-
-        # Report theoretical and experimental steady state currents
-        if self.statusNormalize.get() == 1:
-            if self.statusNormalizeExp.get() == 1:
-                expiss = float(self.entryIssExp.get())
-                fh.write("Experimental steady state current (nA): {0:.3f} \n".format(expiss))
-            else:
-                theoiss = self.issTheo
-                fh.write("Theoretical steady state current (nA): {0:.3f} \n".format(theoiss))
-
-                expiss = 'Not calculated'
-                fh.write("Experimental steady state current (nA): {} \n".format(expiss))
-        else:
-            theoiss = 'Not calculated'
-            fh.write("Theoretical steady state current (nA): {} \n".format(theoiss))
-
-        # Report Rg
-        if self.statusFitRg.get() == 1:
-            fh.write("Rg (fit): {0:.1f} \n".format(self.estRg))
-        else:
+    def export_data_action(self):
+        """Exports the data in an ASCII file that can be read by most 3rd-party plotting software.
+        The data is formatted as follows (i.a. = if applicable):
+        #Headings
+        #
+        #Distance, current, normalized distance i.a., normalized current i.a., theoretical curve i.a., positive feedback curve i.a., negative feedback curve i.a.
+        d,I,Nd,NI,TF,+FB,-FB
+        ...
+        """
+        export = ""
+        try:
+            # Prompt user to select a file name, open a text file with that name
+            export = asksaveasfilename(initialdir=self.last_dir + "/",
+                                       filetypes=[("Text file", "*.txt")],
+                                       title="Choose a file.")
+            filename_start = export.rindex('/')
+            self.last_dir = export[:filename_start]
+            if not export[-4] == '.':
+                export = export + ".txt"
+        except:
+            pass
+        if not export == "":
             try:
-                inputRg = float(self.entryRg.get())
-                fh.write("Rg (input): {0:.1f} \n".format(inputRg))
+                with open(export, "w+") as fh:
+                    # Header lines: print details about the file and data treatment
+                    fh.write("#FLUX: APPROACH CURVE\n")
+                    fh.write("#Original file: {} \n".format(self.filename))
+                    fh.write("#Units of current: {} \n".format(self.currentVar.get()))
+                    fh.write("#Units of distance: {} \n".format(self.distanceVar.get()))
+
+                    # Report theoretical and experimental steady state currents
+                    if self.statNorm == 1:
+                        if self.statNormXP == 1:
+                            expiss = float(self.entryIssExp.get())
+                            fh.write("#Experimental steady state current (nA): {0:.3f} \n".format(expiss))
+                        else:
+                            theoiss = self.issTheo
+                            fh.write("#Theoretical steady state current (nA): {0:.3f} \n".format(theoiss))
+
+                            expiss = 'Not calculated'
+                            fh.write("#Experimental steady state current (nA): {} \n".format(expiss))
+                    else:
+                        theoiss = 'Not calculated'
+                        fh.write("#Theoretical steady state current (nA): {} \n".format(theoiss))
+
+                    # Report Rg
+                    if self.statFRg == 1:
+                        fh.write("#Rg (fit): {0:.1f} \n".format(self.estRg))
+                    else:
+                        try:
+                            inputRg = float(self.entryRg.get())
+                            fh.write("#Rg (input): {0:.3f} \n".format(inputRg))
+                        except:
+                            fh.write("#Rg: Not available \n")
+
+                    # Report kappa
+                    if self.statFK == 1:
+                        fh.write("#kappa (fit): {0:.3E} \n".format(self.estKappa))
+                        try:
+                            fh.write("#k (cm/s): {0:.3E} \n".format(self.estK))
+                        except:
+                            pass
+                    else:
+                        fh.write("#kappa (fit): Not calculated \n")
+                        fh.write("#k (cm/s): Not calculated \n")
+
+                        # Insert blank line between header and data
+                    fh.write("# \n")
+                    fh.write("#Distance, Current")
+                    if self.statNorm == 1:
+                        fh.write(", Normalized distance, Normalized current")
+                    if self.statFK == 1:
+                        fh.write(", Theoretical fit")
+                    if self.statFB == 1:
+                        fh.write(", Positive feedback, Negative feedback")
+
+                    for d in range(len(self.distances)):
+                        fh.write("\n{0:1.4E},{1:1.4E}".format(self.distances[d], self.currents[d]))
+                        if self.statNorm == 1:
+                            fh.write(",{0:1.4E},{1:1.4E}".format(self.distancesnorm[d], self.currentsnorm[d]))
+                        if self.statFK == 1:
+                            fh.write(",{0:1.4E}".format(self.theokappatheo[d]))
+                        if self.statFB == 1:
+                            fh.write(",{0:1.4E},{1:1.4E}".format(self.theoposfb[d], self.theonegfb[d]))
+
+                    # Print 1D array of distance
+                    # fh.write("Tip-substrate distance: \n")
+                    # np.savetxt(fh, self.distances, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
+
+                    # Print 1D array of current
+                    # fh.write("Current: \n")
+                    # np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
+                    # fh.write(" \n")
+
+                    # Print normalized quantities, if applicable
+                    # if self.statusNormalize.get() == 1:
+
+                        # Normalized distance
+                        # fh.write("Normalized tip-substrate distance: \n")
+                        # np.savetxt(fh, self.distancesnorm, delimiter=',', fmt='%1.4e')
+                        # fh.write(" \n")
+
+                        # Normalized current
+                        # fh.write("Normalized current: \n")
+                        # np.savetxt(fh, self.currentsnorm, delimiter=',', fmt='%1.4e')
+                        # fh.write(" \n")
+
+                        # else:
+                        # fh.write(" \n")
+
+                    # Print mixed feedback line for est kappa, if applicable
+                    # if self.statusFitKappa.get() == 1:
+                        # fh.write("Theoretical line for estimated kappa: \n")
+                        # np.savetxt(fh, self.theokappatheo, delimiter=',', fmt='%1.4e')
+                        # fh.write(" \n")
+                        # else:
+                        # fh.write(" \n")
+
+                    # Print pure feedback lines, if applicable
+                    # if self.statusFeedback.get() == 1:
+
+                        # Positive feedback
+                        # fh.write("Theoretical positive feedback: \n")
+                        # np.savetxt(fh, self.theoposfb, delimiter=',', fmt='%1.4e')
+                        # fh.write(" \n")
+
+                        # Negative feedback
+                        # fh.write("Theoretical negative feedback: \n")
+                        # np.savetxt(fh, self.theonegfb, delimiter=',', fmt='%1.4e')
+                        # fh.write(" \n")
+                        # else:
+                        # fh.write(" \n")
+
+                    fh.close()
+                    self.labelPlot.config(text="Data exported.")
             except:
-                fh.write("Rg: Not available \n")
-
-        # Report kappa
-        if self.statusFitKappa.get() == 1:
-            fh.write("kappa (fit): {0:.1f} \n".format(self.estKappa))
-            try:
-                fh.write("k (cm/s): {0:.3f} \n".format(self.estK))
-            except:
-                pass
-        else:
-            fh.write("kappa (fit): Not calculate \n")
-            fh.write("k (cm/s): Not calculated \n")
-
-            # Insert blank line between header and data
-        fh.write(" \n")
-
-        # Print 1D array of distance
-        fh.write("Tip-substrate distance: \n")
-        np.savetxt(fh, self.distances, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        # Print 1D array of current
-        fh.write("Current: \n")
-        np.savetxt(fh, self.currents, delimiter=',', fmt='%1.4e')
-        fh.write(" \n")
-
-        # Print normalized quantities, if applicable
-        if self.statusNormalize.get() == 1:
-
-            # Normalized distance
-            fh.write("Normalized tip-substrate distance: \n")
-            np.savetxt(fh, self.distancesnorm, delimiter=',', fmt='%1.4e')
-            fh.write(" \n")
-
-            # Normalized current
-            fh.write("Normalized current: \n")
-            np.savetxt(fh, self.currentsnorm, delimiter=',', fmt='%1.4e')
-            fh.write(" \n")
-
-        else:
-            fh.write(" \n")
-
-        # Print mixed feedback line for est kappa, if applicable
-        if self.statusFitKappa.get() == 1:
-            fh.write("Theoretical line for estimated kappa: \n")
-            np.savetxt(fh, self.theokappatheo, delimiter=',', fmt='%1.4e')
-            fh.write(" \n")
-        else:
-            fh.write(" \n")
-
-        # Print pure feedback lines, if applicable
-        if self.statusFeedback.get() == 1:
-
-            # Positive feedback
-            fh.write("Theoretical positive feedback: \n")
-            np.savetxt(fh, self.theoposfb, delimiter=',', fmt='%1.4e')
-            fh.write(" \n")
-
-            # Negative feedback
-            fh.write("Theoretical negative feedback: \n")
-            np.savetxt(fh, self.theonegfb, delimiter=',', fmt='%1.4e')
-            fh.write(" \n")
-        else:
-            fh.write(" \n")
-
-        fh.close()
-        self.labelPlot.config(text="Data exported.")
+                self.labelPlot.config(text="Error whilst exporting data")
 
     def ResetWindow(self):
         print("Reset requested.")

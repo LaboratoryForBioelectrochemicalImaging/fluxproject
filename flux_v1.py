@@ -44,8 +44,8 @@ These classes have the following basic structure:
    the user. Updates the figure with the current processing settings.
 5. BoxesSelected : Enables/disables functions in the GUI based on current 
    settings
-6. SaveFig : Save figure to .png file
-7. SaveTxt : Save processed data to .txt file
+6. save_figure(s) : Save figure to .png file
+7. export_data_action : Save processed data to .txt file
 8. ResetWindow : Clear dataset, figure, and labels
 
 Flux has been tested with the following package versions: numpy v1.16.2, 
@@ -54,10 +54,6 @@ stability issues have been observed with other versions (particularly between
 numpy/scikit-image).
 
 
-"""
-
-""" 
-Main window
 """
 
 """
@@ -92,6 +88,7 @@ def open_window():
 
 
 def start_image():
+    """Opens the image app and sets-up the menu bar"""
     # Open imaging window
     Imageroot = tk.Toplevel()
     Imageroot.title('Flux')
@@ -102,16 +99,18 @@ def start_image():
     # Set up menubar
     menubar = tk.Menu(Imageroot)
     helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help", command=(lambda: MenuPagesImage.GuidePage(Imageroot)))
-    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesImage.TheoryPage(Imageroot)))
-    helpmenu.add_command(label="About", command=(lambda: MenuPagesImage.AboutPage(Imageroot, FLUXVERSION)))
+    helpmenu.add_command(label="Help", command=(lambda: MenuPagesImage.guide_page(Imageroot)))
+    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesImage.theory_page(Imageroot)))
+    helpmenu.add_command(label="About", command=(lambda: MenuPagesImage.about_page(Imageroot, FLUXVERSION)))
+    helpmenu.add_command(label="Report bug / request feature", command=(lambda: MenuPagesImage.github_page(Imageroot)))
     menubar.add_cascade(label="Help", menu=helpmenu)
     Imageroot.config(menu=menubar)
 
-    Imageroot.mainloop()  # Initialize program
+    Imageroot.mainloop()  # Run the program's main loop
 
 
 def start_cyclicvoltammetry():
+    """Opens the cyclic voltammetry app and sets-up the menu bar"""
     # Main window
     CVroot = tk.Toplevel()
     CVroot.title('Flux')  # window title
@@ -122,16 +121,18 @@ def start_cyclicvoltammetry():
     # Set up menubar
     menubar = tk.Menu(CVroot)
     helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help", command=(lambda: MenuPagesCV.GuidePage(CVroot)))
-    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesCV.TheoryPage(CVroot)))
-    helpmenu.add_command(label="About", command=(lambda: MenuPagesCV.AboutPage(CVroot, FLUXVERSION)))
+    helpmenu.add_command(label="Help", command=(lambda: MenuPagesCV.guide_page(CVroot)))
+    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesCV.theory_page(CVroot)))
+    helpmenu.add_command(label="About", command=(lambda: MenuPagesCV.about_page(CVroot, FLUXVERSION)))
+    helpmenu.add_command(label="Report bug / request feature", command=(lambda: MenuPagesCV.github_page(CVroot)))
     menubar.add_cascade(label="Help", menu=helpmenu)
     CVroot.config(menu=menubar)
 
-    CVroot.mainloop()  # Initialize program
+    CVroot.mainloop()  # Run the program's main loop
 
 
 def start_chronoamperometry():
+    """opens the chronoamperometry app and sets-up the menu"""
     # Main window
     CAroot = tk.Toplevel()
     CAroot.title('Flux')  # window title
@@ -142,16 +143,18 @@ def start_chronoamperometry():
     # Set up menubar
     menubar = tk.Menu(CAroot)
     helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help", command=(lambda: MenuPagesCA.GuidePage(CAroot)))
-    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesCA.TheoryPage(CAroot)))
-    helpmenu.add_command(label="About", command=(lambda: MenuPagesCA.AboutPage(CAroot, FLUXVERSION)))
+    helpmenu.add_command(label="Help", command=(lambda: MenuPagesCA.guide_page(CAroot)))
+    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesCA.theory_page(CAroot)))
+    helpmenu.add_command(label="About", command=(lambda: MenuPagesCA.about_page(CAroot, FLUXVERSION)))
+    helpmenu.add_command(label="Report bug / request feature", command=(lambda: MenuPagesCA.github_page(CAroot)))
     menubar.add_cascade(label="Help", menu=helpmenu)
     CAroot.config(menu=menubar)
 
-    CAroot.mainloop()  # Initialize program
+    CAroot.mainloop()  # Run the program's main loop
 
 
 def start_approach_curve():
+    """Opens the approach curve app and sets-up the menu bar"""
     # Main window
     PACroot = tk.Toplevel()
     PACroot.title('Flux')  # window title
@@ -162,13 +165,15 @@ def start_approach_curve():
     # Set up menubar
     menubar = tk.Menu(PACroot)
     helpmenu = tk.Menu(menubar, tearoff=0)
-    helpmenu.add_command(label="Help", command=(lambda: MenuPagesPAC.GuidePage(PACroot)))
-    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesPAC.TheoryPage(PACroot)))
-    helpmenu.add_command(label="About", command=(lambda: MenuPagesPAC.AboutPage(PACroot, FLUXVERSION)))
+    helpmenu.add_command(label="Help", command=(lambda: MenuPagesPAC.guide_page(PACroot)))
+    helpmenu.add_command(label="Theory", command=(lambda: MenuPagesPAC.theory_page(PACroot)))
+    helpmenu.add_command(label="About", command=(lambda: MenuPagesPAC.about_page(PACroot, FLUXVERSION)))
+    helpmenu.add_command(label="Report bug / request feature", command=(lambda: MenuPagesPAC.github_page(PACroot)))
     menubar.add_cascade(label="Help", menu=helpmenu)
     PACroot.config(menu=menubar)
 
-    PACroot.mainloop()  # Initialize program
+    PACroot.mainloop()  # Run the program's main loop
+
 
 """
 Main Window
@@ -181,7 +186,8 @@ main.resizable(False, False)
 # Set up menubar
 menubar = tk.Menu(main)
 helpmenu = tk.Menu(menubar, tearoff=0)
-helpmenu.add_command(label="About", command=(lambda: MenuPagesTop.AboutPage(FLUXVERSION, main)))
+helpmenu.add_command(label="About", command=(lambda: MenuPagesTop.about_page(main, FLUXVERSION)))
+helpmenu.add_command(label="Report bug / request feature", command=(lambda: MenuPagesTop.github_page(main)))
 menubar.add_cascade(label="Help", menu=helpmenu)
 main.config(menu=menubar)
 
@@ -229,4 +235,4 @@ labelSupport.grid(row=6, column=0, sticky="W", padx=10)
 # link function to change dropdown
 tkvar.trace('w', change_dropdown)
 
-main.mainloop()
+main.mainloop()  # Run the main window's main loop
